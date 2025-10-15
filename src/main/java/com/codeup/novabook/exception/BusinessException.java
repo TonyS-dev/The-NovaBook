@@ -1,7 +1,7 @@
 package com.codeup.novabook.exception;
 
 /**
- * Base class for business logic exceptions in the EcoFleet system.
+ * Base class for business logic exceptions in the NovaBook system.
  * <p>
  * This exception class represents errors that occur due to business rule
  * violations, invalid data, or logical inconsistencies. These are typically

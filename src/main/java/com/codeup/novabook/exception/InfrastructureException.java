@@ -1,7 +1,7 @@
 package com.codeup.novabook.exception;
 
 /**
- * Base class for infrastructure-related exceptions in the EcoFleet system.
+ * Base class for infrastructure-related exceptions in the NovaBook system.
  * <p>
  * This exception class represents errors that occur at the infrastructure level,
  * such as database connectivity issues, transaction failures, or external

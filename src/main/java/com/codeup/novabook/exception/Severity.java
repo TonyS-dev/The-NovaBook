@@ -3,8 +3,8 @@ package com.codeup.novabook.exception;
 /**
  * Enum representing different severity levels for exceptions.
  * <p>
- * This enum provides a standardized way to classify the severity of errors
- * throughout the EcoFleet system, enabling better error handling, logging,
+ * Defines the severity levels for exceptions and validation errors
+ * throughout the NovaBook system, enabling better error handling, logging,
  * and user experience management.
  * </p>
  * 

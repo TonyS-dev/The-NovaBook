@@ -3,7 +3,7 @@ package com.codeup.novabook.exception;
 import javafx.scene.control.Alert;
 
 /**
- * Utility class for handling EcoFleet exceptions in the UI layer.
+ * Utility class for handling NovaBook exceptions in the UI layer.
  * <p>
  * This class provides standardized methods for displaying exception messages
  * to users in a consistent and user-friendly manner. It translates technical
@@ -22,8 +22,9 @@ import javafx.scene.control.Alert;
  * <pre>{@code
  * try {
  *     userService.register(name, email, password, phone);
- * } catch (EcoFleetException e) {
- *     ExceptionHandler.showErrorDialog(e);
+ *     // Your code here
+ * } catch (NovaBookException e) {
+ *     ExceptionHandler.displayError(e, stage);
  * }
  * }</pre>
  * 
@@ -34,19 +35,19 @@ import javafx.scene.control.Alert;
 public class ExceptionHandler {
 
     /**
-     * Displays an error dialog based on an EcoFleetException.
+     * Displays an error dialog based on a NovaBookException.
      * <p>
      * This method creates an appropriate JavaFX Alert dialog based on the
      * exception's severity level and displays the standardized error message.
      * </p>
      * 
-     * @param exception the EcoFleetException to display
+     * @param exception the NovaBookException to display
      */
     public static void showErrorDialog(NovaBookException exception) {
         Alert.AlertType alertType = mapSeverityToAlertType(exception.getSeverity());
         
         Alert alert = new Alert(alertType);
-        alert.setTitle("EcoFleet - " + exception.getSeverity().name());
+        alert.setTitle("NovaBook - " + exception.getSeverity().name());
         alert.setHeaderText(String.format("Error Code: %s", exception.getCode()));
         alert.setContentText(exception.getMessage());
         
@@ -89,7 +90,7 @@ public class ExceptionHandler {
         Alert.AlertType alertType = mapSeverityToAlertType(exception.getSeverity());
         
         Alert alert = new Alert(alertType);
-        alert.setTitle("EcoFleet");
+        alert.setTitle("NovaBook");
         alert.setHeaderText(null);
         alert.setContentText(exception.getMessage());
         
@@ -118,7 +119,7 @@ public class ExceptionHandler {
      * or monitoring systems for production environments.
      * </p>
      * 
-     * @param exception the EcoFleetException to log
+     * @param exception the NovaBookException to log
      */
     public static void logException(NovaBookException exception) {
         System.err.printf("[%s] %s: %s%n", 
@@ -134,7 +135,7 @@ public class ExceptionHandler {
      * in a single call, suitable for most exception handling scenarios.
      * </p>
      * 
-     * @param exception the EcoFleetException to handle
+     * @param exception the NovaBookException to handle
      */
     public static void handleException(NovaBookException exception) {
         logException(exception);

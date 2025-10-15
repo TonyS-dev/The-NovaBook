@@ -481,14 +481,14 @@ LoanRepositoryImpl --> JdbcTemplate : uses
 JdbcTemplate --> ConnectionFactory : uses
 
 note right of Book
-  **Reference Price Added in Round 2**
+  **Reference Price**
   - Optional field (can be null)
   - Used for book valuation
   - Imported from CSV field 6
 end note
 
 note right of Loan
-  **Business Rules (Round 2)**
+  **Business Rules**
   - Max 3 active loans per member
   - No duplicate book loans
   - Fine calculation on overdue

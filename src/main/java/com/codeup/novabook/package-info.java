@@ -1,7 +1,7 @@
 /**
- * EcoFleet - Vehicle Rental Management System.
+ * NovaBook - Library Management System.
  * <p>
- * This package contains the core application architecture for the EcoFleet vehicle rental system.
+ * This package contains the core application architecture for the NovaBook library management system.
  * The system follows clean architecture principles with clear separation of concerns across layers:
  * </p>
  * <ul>

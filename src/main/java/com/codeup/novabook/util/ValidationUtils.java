@@ -10,13 +10,10 @@ import com.codeup.novabook.exception.ErrorCode;
 import com.codeup.novabook.exception.ValidationException;
 
 /**
- * Comprehensive validation utility class for EcoFleet domain objects.
+ * Comprehensive validation utility class for NovaBook domain objects.
  * <p>
- * This class provides static validation methods for all major domain objects
- * in the EcoFleet system including users, vehicles, rentals, and their closure operations.
- * It enforces business rules and data integrity constraints using the standardized
- * {@link ErrorCode} system for consistent error handling.
- * </p>
+ * This class provides centralized validation logic for all domain entities and business operations
+ * in the NovaBook system including books, members, loans, and their operations.
  * 
  * <p><strong>Key validation capabilities:</strong></p>
  * <ul>

@@ -182,21 +182,21 @@ note right of UC_FilterBooks
 end note
 
 note right of UC_ValidateMaxLoans
-  **Validation (Round 2):**
+  **Validation:**
   - Hard limit: 3 active loans
   - Checked before loan creation
   - Error: MAX_ACTIVE_LOANS_REACHED
 end note
 
 note right of UC_PreventDuplicates
-  **Validation (Round 2):**
+  **Validation:**
   - Same member + same book
   - Only for ACTIVE loans
   - Error: DUPLICATE_BOOK_LOAN
 end note
 
 note left of UC_AutoRefresh
-  **Implementation (Round 2):**
+  **Implementation:**
   - Books tab auto-loads on creation
   - Members tab auto-loads
   - Loans tab auto-loads

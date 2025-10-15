@@ -1,7 +1,7 @@
 /**
  * Repository layer providing data access abstractions and implementations.
  * <p>
- * This package contains the data access layer of the EcoFleet system, following
+ * This package contains the data access layer of the NovaBook system, following
  * the Repository pattern to abstract data persistence operations:
  * </p>
  * <ul>
@@ -12,15 +12,17 @@
  * <p><strong>Repository Interfaces:</strong></p>
  * <ul>
  * <li>{@link com.codeup.novabook.repo.IUserRepository} - User data operations</li>
- * <li>{@link com.codeup.novabook.repo.IVehicleRepository} - Vehicle data operations</li>
- * <li>{@link com.codeup.novabook.repo.IRentalRepository} - Rental data operations</li>
+ * <li>{@link com.codeup.novabook.repo.IBookRepository} - Book data operations</li>
+ * <li>{@link com.codeup.novabook.repo.IMemberRepository} - Member data operations</li>
+ * <li>{@link com.codeup.novabook.repo.ILoanRepository} - Loan data operations</li>
  * </ul>
  * 
  * <p><strong>JDBC Implementations:</strong></p>
  * <ul>
  * <li>{@link com.codeup.novabook.repo.impl.UserRepositoryImpl} - PostgreSQL user operations</li>
- * <li>{@link com.codeup.novabook.repo.impl.VehicleRepositoryImpl} - PostgreSQL vehicle operations</li>
- * <li>{@link com.codeup.novabook.repo.impl.RentalRepositoryImpl} - PostgreSQL rental operations</li>
+ * <li>{@link com.codeup.novabook.repo.impl.BookRepositoryImpl} - PostgreSQL book operations</li>
+ * <li>{@link com.codeup.novabook.repo.impl.MemberRepositoryImpl} - PostgreSQL member operations</li>
+ * <li>{@link com.codeup.novabook.repo.impl.LoanRepositoryImpl} - PostgreSQL loan operations</li>
  * </ul>
  * 
  * <p>

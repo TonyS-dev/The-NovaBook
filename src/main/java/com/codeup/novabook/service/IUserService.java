@@ -10,7 +10,7 @@ import com.codeup.novabook.exception.UserNotFoundException;
 import com.codeup.novabook.exception.ValidationException;
 
 /**
- * Service interface for managing user operations in the EcoFleet system.
+ * Service interface for managing user operations in the NovaBook system.
  * <p>
  * This interface defines the contract for comprehensive user management functionality 
  * including registration, authentication, profile updates, and administrative operations.

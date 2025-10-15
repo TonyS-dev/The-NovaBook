@@ -190,7 +190,7 @@ public interface ILoanService {
      * <p>
      * A loan is overdue if:
      * - status = ACTIVE
-     * - due_date < current_date
+     * - due_date &lt; current_date
      * </p>
      * <p>
      * Used for CSV export as per LibroNova requirement:

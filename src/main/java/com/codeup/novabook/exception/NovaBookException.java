@@ -1,10 +1,10 @@
 package com.codeup.novabook.exception;
 
 /**
- * Base exception class for the EcoFleet application.
+ * Base exception class for the NovaBook application.
  * <p>
  * This is the root exception class that provides a standardized approach to
- * error handling throughout the EcoFleet system. It integrates with the
+ * error handling throughout the NovaBook system. It integrates with the
  * {@link ErrorCode} enum to provide consistent error codes, messages, and
  * severity levels across all application layers.
  * </p>
@@ -19,11 +19,11 @@ package com.codeup.novabook.exception;
  * 
  * <p><strong>Usage Example:</strong></p>
  * <pre>{@code
- * // Throwing a specific error
- * throw new EcoFleetException(ErrorCode.USER_NOT_FOUND);
+ * // Simple usage with error code
+ * throw new NovaBookException(ErrorCode.USER_NOT_FOUND);
  * 
- * // With exception chaining
- * throw new EcoFleetException(ErrorCode.DATABASE_ERROR, sqlException);
+ * // With underlying cause
+ * throw new NovaBookException(ErrorCode.DATABASE_ERROR, sqlException);
  * }</pre>
  * 
  * @author TonyS-dev/Antonio Santiago
@@ -39,7 +39,7 @@ public abstract class NovaBookException extends RuntimeException {
     private final ErrorCode errorCode;
 
     /**
-     * Constructs a new EcoFleetException with the specified error code.
+     * Constructs a new NovaBookException with the specified error code.
      * 
      * @param errorCode the error code that describes this exception
      */
@@ -49,7 +49,7 @@ public abstract class NovaBookException extends RuntimeException {
     }
 
     /**
-     * Constructs a new EcoFleetException with the specified error code and cause.
+     * Constructs a new NovaBookException with the specified error code and cause.
      * 
      * @param errorCode the error code that describes this exception
      * @param cause the underlying cause of this exception

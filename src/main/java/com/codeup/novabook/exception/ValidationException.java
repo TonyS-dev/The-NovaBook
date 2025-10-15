@@ -3,7 +3,7 @@ package com.codeup.novabook.exception;
 /**
  * Exception thrown when validation fails for input data.
  * <p>
- * This exception is used throughout the EcoFleet system to indicate that
+ * This exception is used throughout the NovaBook system to indicate that
  * user input or data does not meet the required validation criteria. It
  * extends {@link BusinessException} as validation failures are business
  * logic conditions that can be corrected by the user.

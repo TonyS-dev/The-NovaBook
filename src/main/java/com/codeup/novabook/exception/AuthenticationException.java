@@ -1,9 +1,9 @@
 package com.codeup.novabook.exception;
 
 /**
- * Exception thrown when authentication fails due to invalid credentials.
+ * Exception thrown when authentication or authorization failures occur.
  * <p>
- * This exception is used throughout the EcoFleet system to indicate
+ * This exception is used throughout the NovaBook system to indicate
  * authentication failures, such as incorrect email/password combinations
  * or expired sessions. It extends {@link BusinessException} as authentication
  * failures are user-correctable conditions.

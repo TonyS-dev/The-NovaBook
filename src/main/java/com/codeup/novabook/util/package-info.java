@@ -1,5 +1,5 @@
 /**
- * Utility classes providing common functionality across the EcoFleet system.
+ * Utility classes providing common functionality across the NovaBook system.
  * <p>
  * This package contains utility classes that provide reusable functionality
  * for various aspects of the application:

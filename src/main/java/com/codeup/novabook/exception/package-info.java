@@ -1,9 +1,8 @@
 /**
- * Exception hierarchy for the EcoFleet application.
+ * Exception hierarchy for the NovaBook application.
  * <p>
- * This package contains all custom exceptions used throughout the EcoFleet system.
- * All exceptions extend from {@link com.codeup.NovaBookException.exception.EcoFleetException}
- * which serves as the base exception class for the application.
+ * This package contains all custom exceptions used throughout the NovaBook system.
+ * All exceptions follow a consistent hierarchy for proper error handling.
  * </p>
  * 
  * <p><strong>Exception Categories:</strong></p>

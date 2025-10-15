@@ -1,0 +1,15 @@
+com.codeup.novabook
+com.codeup.novabook.db
+com.codeup.novabook.domain
+com.codeup.novabook.exception
+com.codeup.novabook.infra.config
+com.codeup.novabook.jdbc
+com.codeup.novabook.repo
+com.codeup.novabook.repo.impl
+com.codeup.novabook.service
+com.codeup.novabook.service.impl
+com.codeup.novabook.ui
+com.codeup.novabook.ui.helper
+com.codeup.novabook.ui.view
+com.codeup.novabook.ui.view.dialog
+com.codeup.novabook.util
