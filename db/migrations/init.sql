@@ -190,18 +190,52 @@ EXECUTE FUNCTION calculate_loan_fine();
 -- SEED DATA (Initial Test Data)
 -- ============================================
 
-
+-- Sample members
+INSERT INTO members (first_name, last_name, document_id, email, phone, address, status, registration_date) 
+VALUES 
+    ('Juan', 'Pérez', '1234567890', 'juan.perez@email.com', '555-1001', 'Calle 123 #45-67', 'ACTIVE', CURRENT_DATE - INTERVAL '6 months'),
+    ('María', 'González', '0987654321', 'maria.gonzalez@email.com', '555-1002', 'Carrera 45 #12-34', 'ACTIVE', CURRENT_DATE - INTERVAL '8 months'),
+    ('Carlos', 'Rodríguez', '1122334455', 'carlos.rodriguez@email.com', '555-1003', 'Avenida 68 #23-45', 'ACTIVE', CURRENT_DATE - INTERVAL '4 months'),
+    ('Ana', 'Martínez', '5544332211', 'ana.martinez@email.com', '555-1004', 'Calle 50 #10-20', 'ACTIVE', CURRENT_DATE - INTERVAL '3 months'),
+    ('Pedro', 'López', '6677889900', 'pedro.lopez@email.com', '555-1005', 'Carrera 7 #15-30', 'SUSPENDED', CURRENT_DATE - INTERVAL '1 year'),
+    ('Laura', 'Hernández', '9988776655', 'laura.hernandez@email.com', '555-1006', 'Calle 80 #25-50', 'ACTIVE', CURRENT_DATE - INTERVAL '2 months')
+ON CONFLICT (document_id) DO NOTHING;
 
 -- Sample books catalog
 INSERT INTO books (isbn, title, author, category, total_copies, available_copies, reference_price, is_active) 
 VALUES 
-    ('978-3-16-148410-0', 'One Hundred Years of Solitude', 'Gabriel García Márquez', 'Literature', 5, 5, 45000, TRUE),
-    ('978-0-7432-7356-5', '1984', 'George Orwell', 'Science Fiction', 3, 3, 38000, TRUE),
-    ('978-0-14-017739-8', 'The Little Prince', 'Antoine de Saint-Exupéry', 'Children', 4, 4, 25000, TRUE),
-    ('978-84-376-0494-7', 'Don Quixote', 'Miguel de Cervantes', 'Classics', 2, 2, 55000, TRUE),
-    ('978-0-06-112008-4', 'To Kill a Mockingbird', 'Harper Lee', 'Fiction', 3, 3, 42000, TRUE),
-    ('978-0-7475-3269-9', 'Harry Potter and the Philosopher Stone', 'J.K. Rowling', 'Fantasy', 6, 6, 35000, TRUE)
+    ('978-3-16-148410-0', 'One Hundred Years of Solitude', 'Gabriel García Márquez', 'Literature', 5, 3, 45000, TRUE),
+    ('978-0-7432-7356-5', '1984', 'George Orwell', 'Science Fiction', 3, 1, 38000, TRUE),
+    ('978-0-14-017739-8', 'The Little Prince', 'Antoine de Saint-Exupéry', 'Children', 4, 3, 25000, TRUE),
+    ('978-84-376-0494-7', 'Don Quixote', 'Miguel de Cervantes', 'Classics', 2, 1, 55000, TRUE),
+    ('978-0-06-112008-4', 'To Kill a Mockingbird', 'Harper Lee', 'Fiction', 3, 2, 42000, TRUE),
+    ('978-0-7475-3269-9', 'Harry Potter and the Philosopher Stone', 'J.K. Rowling', 'Fantasy', 6, 5, 35000, TRUE),
+    ('978-0-452-28423-4', 'The Catcher in the Rye', 'J.D. Salinger', 'Fiction', 4, 3, 40000, TRUE),
+    ('978-0-316-76948-0', 'Pride and Prejudice', 'Jane Austen', 'Romance', 3, 2, 48000, TRUE)
 ON CONFLICT (isbn) DO NOTHING;
+
+-- Sample loans: Mix of active, returned, and OVERDUE loans
+-- OVERDUE LOANS (most important for testing fines)
+INSERT INTO loans (member_id, book_id, loan_date, expected_return_date, actual_return_date, loan_days, fine, status, notes) 
+VALUES 
+    -- OVERDUE loans (not yet returned)
+    (1, 1, CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE - INTERVAL '18 days', NULL, 7, 0.00, 'OVERDUE', 'Overdue by 18 days - Fine: $27,000'),
+    (2, 2, CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE - INTERVAL '13 days', NULL, 7, 0.00, 'OVERDUE', 'Overdue by 13 days - Fine: $19,500'),
+    (3, 4, CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '8 days', NULL, 7, 0.00, 'OVERDUE', 'Overdue by 8 days - Fine: $12,000'),
+    (5, 8, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE - INTERVAL '23 days', NULL, 7, 0.00, 'OVERDUE', 'CRITICAL: Overdue by 23 days - Fine: $34,500'),
+    
+    -- RETURNED loans with fines (already paid)
+    (1, 6, CURRENT_DATE - INTERVAL '45 days', CURRENT_DATE - INTERVAL '38 days', CURRENT_DATE - INTERVAL '35 days', 7, 4500.00, 'RETURNED', 'Returned 3 days late - Fine paid: $4,500'),
+    (4, 7, CURRENT_DATE - INTERVAL '40 days', CURRENT_DATE - INTERVAL '33 days', CURRENT_DATE - INTERVAL '30 days', 7, 3000.00, 'RETURNED', 'Returned 2 days late - Fine paid: $3,000'),
+    
+    -- ACTIVE loans (not overdue yet, within time)
+    (2, 3, CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE + INTERVAL '4 days', NULL, 7, 0.00, 'ACTIVE', 'Due in 4 days'),
+    (4, 5, CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE + INTERVAL '5 days', NULL, 7, 0.00, 'ACTIVE', 'Due in 5 days'),
+    (6, 6, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '6 days', NULL, 7, 0.00, 'ACTIVE', 'Due in 6 days'),
+    
+    -- RETURNED on time (no fines)
+    (3, 7, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE - INTERVAL '23 days', CURRENT_DATE - INTERVAL '24 days', 7, 0.00, 'RETURNED', 'Returned on time'),
+    (6, 3, CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE - INTERVAL '18 days', CURRENT_DATE - INTERVAL '19 days', 7, 0.00, 'RETURNED', 'Returned 1 day early');
 
 -- ============================================
 -- VIEWS for Reports and Exports
