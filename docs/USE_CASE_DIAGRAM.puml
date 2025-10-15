@@ -1,0 +1,206 @@
+@startuml NovaBook_Use_Case_Diagram
+!theme plain
+left to right direction
+skinparam packageStyle rectangle
+
+title NovaBook Library Management System - Use Cases
+
+' ============== ACTORS ==============
+actor "Librarian\n(Admin/User)" as Librarian
+actor "System" as System
+
+' ============== AUTHENTICATION USE CASES ==============
+package "Authentication & Authorization" {
+    usecase (Login to System) as UC_Login
+    usecase (Logout from System) as UC_Logout
+    usecase (Change Password) as UC_ChangePassword
+    usecase (Manage Users) as UC_ManageUsers
+    usecase (Create User Account) as UC_CreateUser
+    usecase (Update User Account) as UC_UpdateUser
+    usecase (Deactivate User Account) as UC_DeactivateUser
+}
+
+' ============== BOOK MANAGEMENT USE CASES ==============
+package "Book Management" {
+    usecase (Register New Book) as UC_RegisterBook
+    usecase (Update Book Information) as UC_UpdateBook
+    usecase (Search Books) as UC_SearchBooks
+    usecase (View Book Details) as UC_ViewBookDetails
+    usecase (Deactivate Book) as UC_DeactivateBook
+    usecase (Activate Book) as UC_ActivateBook
+    usecase (Import Books from CSV) as UC_ImportBooks
+    usecase (Export Books to CSV) as UC_ExportBooks
+    usecase (Filter Active/Inactive Books) as UC_FilterBooks
+    usecase (Set Reference Price) as UC_SetPrice
+}
+
+' ============== MEMBER MANAGEMENT USE CASES ==============
+package "Member Management" {
+    usecase (Register New Member) as UC_RegisterMember
+    usecase (Update Member Information) as UC_UpdateMember
+    usecase (Search Members) as UC_SearchMembers
+    usecase (View Member Details) as UC_ViewMemberDetails
+    usecase (Suspend Member) as UC_SuspendMember
+    usecase (Activate Member) as UC_ActivateMember
+    usecase (View Member Loan History) as UC_ViewMemberHistory
+    usecase (Check Member Eligibility) as UC_CheckEligibility
+}
+
+' ============== LOAN MANAGEMENT USE CASES ==============
+package "Loan Management" {
+    usecase (Create New Loan) as UC_CreateLoan
+    usecase (Return Loan) as UC_ReturnLoan
+    usecase (View Active Loans) as UC_ViewActiveLoans
+    usecase (View Overdue Loans) as UC_ViewOverdueLoans
+    usecase (Calculate Fine) as UC_CalculateFine
+    usecase (View Loan Details) as UC_ViewLoanDetails
+    usecase (Search Loans) as UC_SearchLoans
+    usecase (Validate Max Loans Limit) as UC_ValidateMaxLoans
+    usecase (Prevent Duplicate Loans) as UC_PreventDuplicates
+}
+
+' ============== REPORTING & ANALYTICS USE CASES ==============
+package "Reporting & Analytics" {
+    usecase (View Dashboard Statistics) as UC_ViewDashboard
+    usecase (Generate Loan Report) as UC_GenerateLoanReport
+    usecase (View Book Inventory) as UC_ViewInventory
+    usecase (Track Overdue Books) as UC_TrackOverdue
+}
+
+' ============== SYSTEM USE CASES ==============
+package "System Operations" {
+    usecase (Auto-refresh Data on Load) as UC_AutoRefresh
+    usecase (Validate Business Rules) as UC_ValidateRules
+    usecase (Manage Database Transactions) as UC_ManageTransactions
+    usecase (Log System Events) as UC_LogEvents
+    usecase (Handle Errors) as UC_HandleErrors
+}
+
+' ============== RELATIONSHIPS ==============
+
+' Authentication
+Librarian --> UC_Login
+Librarian --> UC_Logout
+Librarian --> UC_ChangePassword
+Librarian --> UC_ManageUsers
+UC_ManageUsers ..> UC_CreateUser : <<include>>
+UC_ManageUsers ..> UC_UpdateUser : <<include>>
+UC_ManageUsers ..> UC_DeactivateUser : <<include>>
+
+' Book Management
+Librarian --> UC_RegisterBook
+Librarian --> UC_UpdateBook
+Librarian --> UC_SearchBooks
+Librarian --> UC_ViewBookDetails
+Librarian --> UC_DeactivateBook
+Librarian --> UC_ActivateBook
+Librarian --> UC_ImportBooks
+Librarian --> UC_ExportBooks
+Librarian --> UC_FilterBooks
+
+UC_RegisterBook ..> UC_SetPrice : <<include>>
+UC_UpdateBook ..> UC_SetPrice : <<include>>
+UC_ImportBooks ..> UC_SetPrice : <<include>>
+
+' Member Management
+Librarian --> UC_RegisterMember
+Librarian --> UC_UpdateMember
+Librarian --> UC_SearchMembers
+Librarian --> UC_ViewMemberDetails
+Librarian --> UC_SuspendMember
+Librarian --> UC_ActivateMember
+Librarian --> UC_ViewMemberHistory
+
+UC_CreateLoan ..> UC_CheckEligibility : <<include>>
+
+' Loan Management
+Librarian --> UC_CreateLoan
+Librarian --> UC_ReturnLoan
+Librarian --> UC_ViewActiveLoans
+Librarian --> UC_ViewOverdueLoans
+Librarian --> UC_ViewLoanDetails
+Librarian --> UC_SearchLoans
+
+UC_CreateLoan ..> UC_ValidateMaxLoans : <<include>>
+UC_CreateLoan ..> UC_PreventDuplicates : <<include>>
+UC_ReturnLoan ..> UC_CalculateFine : <<include>>
+
+' Reporting
+Librarian --> UC_ViewDashboard
+Librarian --> UC_GenerateLoanReport
+Librarian --> UC_ViewInventory
+Librarian --> UC_TrackOverdue
+
+' System Operations
+System --> UC_AutoRefresh
+System --> UC_ValidateRules
+System --> UC_ManageTransactions
+System --> UC_LogEvents
+System --> UC_HandleErrors
+
+UC_CreateLoan ..> UC_ValidateRules : <<include>>
+UC_ReturnLoan ..> UC_ManageTransactions : <<include>>
+UC_RegisterBook ..> UC_LogEvents : <<include>>
+UC_RegisterMember ..> UC_LogEvents : <<include>>
+
+' Cross-cutting concerns
+UC_CreateLoan ..> UC_HandleErrors : <<extend>>
+UC_ReturnLoan ..> UC_HandleErrors : <<extend>>
+UC_ImportBooks ..> UC_HandleErrors : <<extend>>
+
+note right of UC_CreateLoan
+  **Business Rules:**
+  - Max 3 active loans per member
+  - No duplicate book loans
+  - Member must be ACTIVE
+  - Book must be available
+  - Decreases available copies
+end note
+
+note right of UC_ReturnLoan
+  **Actions:**
+  - Updates loan status to RETURNED
+  - Sets actual return date
+  - Calculates fine if overdue
+  - Increases available copies
+  - All in database transaction
+end note
+
+note right of UC_ImportBooks
+  **CSV Format:**
+  isbn,title,author,category,stock,reference_price
+  - Reference price is optional (field 6)
+  - Validates all fields before import
+  - Reports errors per line
+end note
+
+note right of UC_FilterBooks
+  **Default Behavior:**
+  - Shows only ACTIVE books
+  - User can toggle to show ALL books
+  - Filter applies to search results
+end note
+
+note right of UC_ValidateMaxLoans
+  **Validation (Round 2):**
+  - Hard limit: 3 active loans
+  - Checked before loan creation
+  - Error: MAX_ACTIVE_LOANS_REACHED
+end note
+
+note right of UC_PreventDuplicates
+  **Validation (Round 2):**
+  - Same member + same book
+  - Only for ACTIVE loans
+  - Error: DUPLICATE_BOOK_LOAN
+end note
+
+note left of UC_AutoRefresh
+  **Implementation (Round 2):**
+  - Books tab auto-loads on creation
+  - Members tab auto-loads
+  - Loans tab auto-loads
+  - Users tab auto-loads
+end note
+
+@enduml

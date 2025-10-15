@@ -1,0 +1,506 @@
+@startuml NovaBook_Class_Diagram
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+title NovaBook Library Management System - Complete Class Diagram
+
+' ============== DOMAIN LAYER ==============
+package "Domain Layer" <<Rectangle>> {
+    
+    ' Book Entity
+    class Book {
+        - Integer id
+        - String isbn
+        - String title
+        - String author
+        - String category
+        - Integer totalCopies
+        - Integer availableCopies
+        - BigDecimal referencePrice
+        - Boolean active
+        - LocalDateTime createdAt
+        - LocalDateTime updatedAt
+        --
+        + getId(): Integer
+        + getIsbn(): String
+        + getTitle(): String
+        + getAuthor(): String
+        + getCategory(): String
+        + getTotalCopies(): Integer
+        + getAvailableCopies(): Integer
+        + getReferencePrice(): BigDecimal
+        + isActive(): Boolean
+        + getCreatedAt(): LocalDateTime
+        + getUpdatedAt(): LocalDateTime
+        --
+        + setters for all fields
+    }
+    
+    ' Member Entity
+    class Member {
+        - Integer id
+        - String name
+        - String email
+        - String phone
+        - String address
+        - MemberStatus status
+        - LocalDate registrationDate
+        - LocalDateTime createdAt
+        - LocalDateTime updatedAt
+        --
+        + getId(): Integer
+        + getName(): String
+        + getEmail(): String
+        + getPhone(): String
+        + getAddress(): String
+        + getStatus(): MemberStatus
+        + getRegistrationDate(): LocalDate
+        --
+        + setters for all fields
+    }
+    
+    enum MemberStatus {
+        ACTIVE
+        SUSPENDED
+        INACTIVE
+    }
+    
+    ' User Entity
+    class User {
+        - Integer id
+        - String name
+        - String email
+        - String passwordHash
+        - UserRole role
+        - UserStatus status
+        - LocalDateTime lastLogin
+        - LocalDateTime createdAt
+        - LocalDateTime updatedAt
+        --
+        + getId(): Integer
+        + getName(): String
+        + getEmail(): String
+        + getPasswordHash(): String
+        + getRole(): UserRole
+        + getStatus(): UserStatus
+        + getLastLogin(): LocalDateTime
+        --
+        + setters for all fields
+    }
+    
+    enum UserRole {
+        ADMIN
+        LIBRARIAN
+    }
+    
+    enum UserStatus {
+        ACTIVE
+        SUSPENDED
+        INACTIVE
+    }
+    
+    ' Loan Entity
+    class Loan {
+        - Integer id
+        - Integer memberId
+        - Integer bookId
+        - LocalDate loanDate
+        - LocalDate expectedReturnDate
+        - LocalDate actualReturnDate
+        - BigDecimal fineAmount
+        - LoanStatus status
+        - LocalDateTime createdAt
+        - LocalDateTime updatedAt
+        --
+        + getId(): Integer
+        + getMemberId(): Integer
+        + getBookId(): Integer
+        + getLoanDate(): LocalDate
+        + getExpectedReturnDate(): LocalDate
+        + getActualReturnDate(): LocalDate
+        + getFineAmount(): BigDecimal
+        + getStatus(): LoanStatus
+        --
+        + setters for all fields
+    }
+    
+    enum LoanStatus {
+        ACTIVE
+        RETURNED
+        OVERDUE
+    }
+}
+
+' ============== REPOSITORY LAYER ==============
+package "Repository Layer" <<Rectangle>> {
+    
+    interface IBookRepository {
+        + create(Book): Book
+        + update(Book): void
+        + findById(Integer): Optional<Book>
+        + findByIsbn(String): Optional<Book>
+        + findAll(): List<Book>
+        + findActiveBooks(): List<Book>
+        + existsByIsbn(String): boolean
+        + decreaseAvailableCopies(Integer): boolean
+        + increaseAvailableCopies(Integer): boolean
+    }
+    
+    interface IMemberRepository {
+        + create(Member): Member
+        + update(Member): void
+        + findById(Integer): Optional<Member>
+        + findByEmail(String): Optional<Member>
+        + findAll(): List<Member>
+        + findActiveMembers(): List<Member>
+        + existsByEmail(String): boolean
+    }
+    
+    interface IUserRepository {
+        + create(User): User
+        + update(User): void
+        + findById(Integer): Optional<User>
+        + findByEmail(String): Optional<User>
+        + findAll(): List<User>
+        + existsByEmail(String): boolean
+        + updateLastLogin(Integer): void
+    }
+    
+    interface ILoanRepository {
+        + create(Loan): Loan
+        + update(Loan): void
+        + findById(Integer): Optional<Loan>
+        + findByMemberId(Integer): List<Loan>
+        + findByBookId(Integer): List<Loan>
+        + findActiveLoansByMember(Integer): List<Loan>
+        + findOverdueLoans(): List<Loan>
+        + countLoansByMember(Integer): int
+    }
+    
+    class BookRepositoryImpl
+    class MemberRepositoryImpl
+    class UserRepositoryImpl
+    class LoanRepositoryImpl
+}
+
+' ============== SERVICE LAYER ==============
+package "Service Layer" <<Rectangle>> {
+    
+    interface IBookService {
+        + registerBook(String, String, String, String, Integer, BigDecimal): Book
+        + updateBook(Integer, String, String, String, String, Integer, BigDecimal): Book
+        + getBookById(Integer): Book
+        + getAllBooks(): List<Book>
+        + getActiveBooks(): List<Book>
+        + deactivateBook(Integer): void
+        + activateBook(Integer): void
+        + isbnExists(String): boolean
+        + isAvailableForLoan(Integer): boolean
+    }
+    
+    interface IMemberService {
+        + registerMember(String, String, String, String): Member
+        + updateMember(Integer, String, String, String, String): Member
+        + getMemberById(Integer): Member
+        + getAllMembers(): List<Member>
+        + getActiveMembers(): List<Member>
+        + suspendMember(Integer): void
+        + activateMember(Integer): void
+        + isEligibleForLoan(Integer): boolean
+    }
+    
+    interface IUserService {
+        + authenticate(String, String): User
+        + registerUser(String, String, String, UserRole): User
+        + updateUser(Integer, String, String, UserRole, UserStatus): User
+        + getUserById(Integer): User
+        + getAllUsers(): List<User>
+        + changePassword(Integer, String, String): void
+    }
+    
+    interface ILoanService {
+        + createLoan(Integer, Integer, LocalDate): Loan
+        + returnLoan(Integer, BigDecimal): Loan
+        + getLoanById(Integer): Loan
+        + getLoansByMember(Integer): List<Loan>
+        + getActiveLoans(): List<Loan>
+        + getOverdueLoans(): List<Loan>
+        + calculateFine(Integer, BigDecimal): BigDecimal
+        + isEligibleForLoan(Integer, Integer): boolean
+        + countActiveLoansByMember(Integer): int
+    }
+    
+    class BookServiceImpl
+    class MemberServiceImpl
+    class UserServiceImpl
+    class LoanServiceImpl
+}
+
+' ============== UI LAYER ==============
+package "UI Layer (JavaFX)" <<Rectangle>> {
+    
+    class LoginView {
+        - TextField emailField
+        - PasswordField passwordField
+        - Button loginButton
+        --
+        + show(): void
+        - handleLogin(): void
+        - validateCredentials(): boolean
+    }
+    
+    class DashboardView {
+        - TabPane tabPane
+        - TableView<Book> booksTable
+        - TableView<Member> membersTable
+        - TableView<Loan> loansTable
+        - TableView<User> usersTable
+        --
+        + show(): void
+        - createBooksTab(): Tab
+        - createMembersTab(): Tab
+        - createLoansTab(): Tab
+        - createUsersTab(): Tab
+        - loadBooks(): void
+        - loadMembers(): void
+        - loadLoans(): void
+        - loadUsers(): void
+    }
+    
+    class BookDialog {
+        - TextField isbnField
+        - TextField titleField
+        - TextField authorField
+        - TextField categoryField
+        - TextField stockField
+        - TextField priceField
+        --
+        + showAndWait(): Optional<Book>
+        - handleSave(): void
+        - validateInputs(): boolean
+    }
+    
+    class MemberDialog {
+        - TextField nameField
+        - TextField emailField
+        - TextField phoneField
+        - TextArea addressArea
+        --
+        + showAndWait(): Optional<Member>
+        - handleSave(): void
+        - validateInputs(): boolean
+    }
+    
+    class LoanDialog {
+        - ComboBox<Member> memberComboBox
+        - ComboBox<Book> bookComboBox
+        - DatePicker dueDatePicker
+        --
+        + showAndWait(): Optional<Loan>
+        - handleCreate(): void
+        - validateInputs(): boolean
+        - checkAvailability(): boolean
+    }
+    
+    class UserDialog {
+        - TextField nameField
+        - TextField emailField
+        - PasswordField passwordField
+        - ComboBox<UserRole> roleComboBox
+        --
+        + showAndWait(): Optional<User>
+        - handleSave(): void
+        - validateInputs(): boolean
+    }
+}
+
+' ============== EXCEPTION LAYER ==============
+package "Exception Layer" <<Rectangle>> {
+    
+    enum ErrorCode {
+        BOOK_NOT_FOUND
+        MEMBER_NOT_FOUND
+        USER_NOT_FOUND
+        LOAN_NOT_FOUND
+        ISBN_ALREADY_EXISTS
+        EMAIL_ALREADY_EXISTS
+        BOOK_NOT_AVAILABLE
+        MEMBER_INACTIVE
+        MAX_ACTIVE_LOANS_REACHED
+        DUPLICATE_BOOK_LOAN
+        AUTHENTICATION_FAILED
+        INVALID_DATA
+        DATABASE_ERROR
+    }
+    
+    class BusinessException {
+        - ErrorCode errorCode
+        - String message
+    }
+    
+    class BookNotFoundException
+    class MemberNotFoundException
+    class UserNotFoundException
+    class LoanNotFoundException
+    class BookNotAvailableException
+    class ValidationException
+    class AuthenticationException
+}
+
+' ============== UTILITY LAYER ==============
+package "Utility Layer" <<Rectangle>> {
+    
+    class ValidationUtils {
+        + {static} validateEmail(String): void
+        + {static} validatePhone(String): void
+        + {static} validateIsbn(String): void
+        + {static} validatePassword(String): void
+        + {static} validateBook(...): void
+        + {static} validateMember(...): void
+        + {static} validateLoan(...): void
+    }
+    
+    class PasswordUtils {
+        + {static} hashPassword(String): String
+        + {static} verifyPassword(String, String): boolean
+    }
+    
+    class CsvHelper {
+        + {static} importBooks(File, IBookService): ImportResult
+        + {static} exportBooks(File, List<Book>): void
+        + {static} importMembers(File, IMemberService): ImportResult
+        + {static} exportMembers(File, List<Member>): void
+    }
+    
+    class DateUtils {
+        + {static} formatDate(LocalDate): String
+        + {static} formatDateTime(LocalDateTime): String
+        + {static} isOverdue(LocalDate): boolean
+        + {static} calculateDaysBetween(LocalDate, LocalDate): long
+    }
+}
+
+' ============== INFRASTRUCTURE LAYER ==============
+package "Infrastructure Layer" <<Rectangle>> {
+    
+    class ConnectionFactory {
+        - {static} DataSource dataSource
+        --
+        + {static} getDataSource(): DataSource
+        + {static} getConnection(): Connection
+        - {static} loadProperties(): Properties
+    }
+    
+    class JdbcTemplate {
+        - DataSource dataSource
+        --
+        + query(String, ResultSetExtractor): T
+        + update(String, Object...): int
+        + execute(String): void
+        + txExecute(TransactionCallback): T
+    }
+}
+
+' ============== RELATIONSHIPS ==============
+
+' Domain relationships
+Book "1" -- "0..*" Loan : "is loaned in >"
+Member "1" -- "0..*" Loan : "borrows >"
+Book -- MemberStatus
+Member -- UserStatus
+User -- UserRole
+Loan -- LoanStatus
+
+' Repository implementations
+IBookRepository <|.. BookRepositoryImpl
+IMemberRepository <|.. MemberRepositoryImpl
+IUserRepository <|.. UserRepositoryImpl
+ILoanRepository <|.. LoanRepositoryImpl
+
+' Service implementations
+IBookService <|.. BookServiceImpl
+IMemberService <|.. MemberServiceImpl
+IUserService <|.. UserServiceImpl
+ILoanService <|.. LoanServiceImpl
+
+' Service depends on Repository
+BookServiceImpl --> IBookRepository : uses
+MemberServiceImpl --> IMemberRepository : uses
+UserServiceImpl --> IUserRepository : uses
+LoanServiceImpl --> ILoanRepository : uses
+LoanServiceImpl --> IMemberRepository : uses
+LoanServiceImpl --> IBookRepository : uses
+
+' Service uses Domain
+BookServiceImpl --> Book : manages
+MemberServiceImpl --> Member : manages
+UserServiceImpl --> User : manages
+LoanServiceImpl --> Loan : manages
+
+' UI depends on Service
+LoginView --> IUserService : uses
+DashboardView --> IBookService : uses
+DashboardView --> IMemberService : uses
+DashboardView --> ILoanService : uses
+DashboardView --> IUserService : uses
+BookDialog --> IBookService : uses
+MemberDialog --> IMemberService : uses
+LoanDialog --> ILoanService : uses
+UserDialog --> IUserService : uses
+
+' UI uses Domain
+DashboardView --> Book : displays
+DashboardView --> Member : displays
+DashboardView --> Loan : displays
+DashboardView --> User : displays
+
+' Exception relationships
+BusinessException <|-- BookNotFoundException
+BusinessException <|-- MemberNotFoundException
+BusinessException <|-- UserNotFoundException
+BusinessException <|-- LoanNotFoundException
+BusinessException <|-- BookNotAvailableException
+BusinessException <|-- ValidationException
+BusinessException <|-- AuthenticationException
+BusinessException --> ErrorCode : contains
+
+' Utility usage
+BookServiceImpl --> ValidationUtils : uses
+MemberServiceImpl --> ValidationUtils : uses
+UserServiceImpl --> ValidationUtils : uses
+UserServiceImpl --> PasswordUtils : uses
+DashboardView --> CsvHelper : uses
+LoanServiceImpl --> DateUtils : uses
+
+' Infrastructure usage
+BookRepositoryImpl --> JdbcTemplate : uses
+MemberRepositoryImpl --> JdbcTemplate : uses
+UserRepositoryImpl --> JdbcTemplate : uses
+LoanRepositoryImpl --> JdbcTemplate : uses
+JdbcTemplate --> ConnectionFactory : uses
+
+note right of Book
+  **Reference Price Added in Round 2**
+  - Optional field (can be null)
+  - Used for book valuation
+  - Imported from CSV field 6
+end note
+
+note right of Loan
+  **Business Rules (Round 2)**
+  - Max 3 active loans per member
+  - No duplicate book loans
+  - Fine calculation on overdue
+end note
+
+note bottom of LoanServiceImpl
+  **Validations in createLoan():**
+  1. Member must be ACTIVE
+  2. Member must have < 3 active loans
+  3. Member cannot have duplicate book loan
+  4. Book must be ACTIVE
+  5. Book must have available copies
+end note
+
+@enduml

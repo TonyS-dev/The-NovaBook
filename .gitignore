@@ -1,0 +1,10 @@
+/target/
+.idea/
+.vscode/
+.env
+app.log
+application.properties
+FIXES_ROUND2_PHASES1-3_SUMMARY.md
+ISSUES_FOUND.md
+NEW_ISSUES_ROUND2.md
+ROUND2_COMPLETE_SUMMARY.md
