@@ -1,0 +1,12 @@
+Loan ID,Member ID,Member Name,Member Email,Book ID,Book Title,ISBN,Loan Date,Due Date,Return Date,Status,Days Overdue
+9,6,Laura Hernández,laura.hernandez@email.com,6,Harry Potter and the Philosopher Stone,978-0-7475-3269-9,2025-10-15,2025-10-22,,ACTIVE,0
+8,4,Ana Martínez,ana.martinez@email.com,5,To Kill a Mockingbird,978-0-06-112008-4,2025-10-14,2025-10-21,,ACTIVE,0
+7,2,María González,maria.gonzalez@email.com,3,The Little Prince,978-0-14-017739-8,2025-10-13,2025-10-20,,ACTIVE,0
+3,3,Carlos Rodríguez,carlos.rodriguez@email.com,4,Don Quixote,978-84-376-0494-7,2025-10-01,2025-10-08,,OVERDUE,8
+2,2,María González,maria.gonzalez@email.com,2,1984,978-0-7432-7356-5,2025-09-26,2025-10-03,,OVERDUE,13
+1,1,Juan Pérez,juan.perez@email.com,1,One Hundred Years of Solitude,978-3-16-148410-0,2025-09-21,2025-09-28,,OVERDUE,18
+11,6,Laura Hernández,laura.hernandez@email.com,3,The Little Prince,978-0-14-017739-8,2025-09-21,2025-09-28,2025-09-27,RETURNED,0
+4,5,Pedro López,pedro.lopez@email.com,8,Pride and Prejudice,978-0-316-76948-0,2025-09-16,2025-09-23,,OVERDUE,23
+10,3,Carlos Rodríguez,carlos.rodriguez@email.com,7,The Catcher in the Rye,978-0-452-28423-4,2025-09-16,2025-09-23,2025-09-22,RETURNED,0
+6,4,Ana Martínez,ana.martinez@email.com,7,The Catcher in the Rye,978-0-452-28423-4,2025-09-06,2025-09-13,2025-09-16,RETURNED,3
+5,1,Juan Pérez,juan.perez@email.com,6,Harry Potter and the Philosopher Stone,978-0-7475-3269-9,2025-09-01,2025-09-08,2025-09-11,RETURNED,3

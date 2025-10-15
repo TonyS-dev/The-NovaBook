@@ -1,16 +1,19 @@
 package com.codeup.novabook.service.impl;
 
-import com.codeup.novabook.domain.Book;
-import com.codeup.novabook.exception.*;
-import com.codeup.novabook.repo.IBookRepository;
-import com.codeup.novabook.service.IBookService;
-import com.codeup.novabook.util.ValidationUtils;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.codeup.novabook.domain.Book;
+import com.codeup.novabook.exception.BookNotFoundException;
+import com.codeup.novabook.exception.DatabaseException;
+import com.codeup.novabook.exception.ErrorCode;
+import com.codeup.novabook.exception.ValidationException;
+import com.codeup.novabook.repo.IBookRepository;
+import com.codeup.novabook.service.IBookService;
+import com.codeup.novabook.util.ValidationUtils;
 
 /**
  * Service implementation for Book management with ISBN validation and stock control.
@@ -50,7 +53,8 @@ public class BookServiceImpl implements IBookService {
             book.setIsbn(isbn);
             book.setTitle(title);
             book.setAuthor(author);
-            book.setCategory(category);
+            // Convert String category to BookCategory enum (use fromDisplayName for CSV imports)
+            book.setCategory(category != null ? com.codeup.novabook.domain.BookCategory.fromDisplayName(category) : null);
             book.setTotalCopies(stock);
             book.setAvailableCopies(stock);
             book.setReferencePrice(referencePrice); // Set price
@@ -200,6 +204,7 @@ public class BookServiceImpl implements IBookService {
     }
     
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     public Book updateBook(Integer bookId, String title, String author, String isbn, 
                           String category, Integer stock, java.math.BigDecimal referencePrice) 
             throws BookNotFoundException, ValidationException {
@@ -238,7 +243,8 @@ public class BookServiceImpl implements IBookService {
             book.setIsbn(isbn);
             book.setTitle(title);
             book.setAuthor(author);
-            book.setCategory(category);
+            // Convert String category to BookCategory enum
+            book.setCategory(category != null ? com.codeup.novabook.domain.BookCategory.fromDatabaseValue(category) : null);
             book.setTotalCopies(stock);
             book.setAvailableCopies(newAvailable);
             book.setReferencePrice(referencePrice); // Update price
@@ -258,6 +264,7 @@ public class BookServiceImpl implements IBookService {
     }
     
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     public Book updateStock(Integer bookId, Integer newStock) 
             throws BookNotFoundException, ValidationException {
         LOGGER.log(Level.INFO, "[PATCH /api/books/{0}/stock] Updating stock to {1}", 

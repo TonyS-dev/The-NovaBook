@@ -8,18 +8,22 @@ import com.codeup.novabook.exception.UserAlreadyExistsException;
 import com.codeup.novabook.exception.ValidationException;
 import com.codeup.novabook.infra.config.AppConfig;
 import com.codeup.novabook.repo.IBookRepository;
+import com.codeup.novabook.repo.IConfigRepository;
 import com.codeup.novabook.repo.ILoanRepository;
 import com.codeup.novabook.repo.IMemberRepository;
 import com.codeup.novabook.repo.IUserRepository;
 import com.codeup.novabook.repo.impl.BookRepositoryImpl;
+import com.codeup.novabook.repo.impl.ConfigRepositoryImpl;
 import com.codeup.novabook.repo.impl.LoanRepositoryImpl;
 import com.codeup.novabook.repo.impl.MemberRepositoryImpl;
 import com.codeup.novabook.repo.impl.UserRepositoryImpl;
 import com.codeup.novabook.service.IBookService;
+import com.codeup.novabook.service.IConfigService;
 import com.codeup.novabook.service.ILoanService;
 import com.codeup.novabook.service.IMemberService;
 import com.codeup.novabook.service.IUserService;
 import com.codeup.novabook.service.impl.BookServiceImpl;
+import com.codeup.novabook.service.impl.ConfigServiceImpl;
 import com.codeup.novabook.service.impl.LoanServiceImpl;
 import com.codeup.novabook.service.impl.MemberServiceImpl;
 import com.codeup.novabook.service.impl.UserServiceImpl;
@@ -120,18 +124,20 @@ public class NovaBookApp extends Application {
         IMemberRepository memberRepo = new MemberRepositoryImpl(connectionFactory);
         IBookRepository bookRepo = new BookRepositoryImpl(connectionFactory);
         ILoanRepository loanRepo = new LoanRepositoryImpl(connectionFactory);
+        IConfigRepository configRepo = new ConfigRepositoryImpl(connectionFactory);
         
         // Service Layer (Business Logic)
         IUserService userService = new UserServiceImpl(userRepo);
         IMemberService memberService = new MemberServiceImpl(memberRepo);
         IBookService bookService = new BookServiceImpl(bookRepo);
-        ILoanService loanService = new LoanServiceImpl(loanRepo, memberRepo, bookRepo);
+        IConfigService configService = new ConfigServiceImpl(configRepo);
+        ILoanService loanService = new LoanServiceImpl(loanRepo, memberRepo, bookRepo, configService);
         
         // Create test users if they don't exist (via service for proper BCrypt hashing)
         createTestUsersIfNeeded(userService);
         
         logger.info("Services initialized successfully!");
-        return new ServiceContainer(userService, memberService, bookService, loanService);
+        return new ServiceContainer(userService, memberService, bookService, loanService, configService);
     }
     
     /**
@@ -152,6 +158,7 @@ public class NovaBookApp extends Application {
      * 
      * @param userService the user service for creating users with proper password hashing
      */
+    @SuppressWarnings("UseSpecificCatch")
     private void createTestUsersIfNeeded(IUserService userService) {
         logger.info("Checking for test users...");
         

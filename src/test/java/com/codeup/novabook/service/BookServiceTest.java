@@ -1,22 +1,31 @@
 package com.codeup.novabook.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
 import com.codeup.novabook.domain.Book;
+import com.codeup.novabook.domain.BookCategory;
 import com.codeup.novabook.exception.BookNotFoundException;
 import com.codeup.novabook.exception.ValidationException;
 import com.codeup.novabook.repo.IBookRepository;
 import com.codeup.novabook.service.impl.BookServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for BookService implementation.
@@ -42,7 +51,8 @@ class BookServiceTest {
     private IBookService bookService;
 
     @BeforeEach
-    void setUp() {
+    @SuppressWarnings("unused")
+    void setUp() { // Called by JUnit framework before each test
         MockitoAnnotations.openMocks(this);
         bookService = new BookServiceImpl(bookRepository);
     }
@@ -51,12 +61,12 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should register book with valid inputs")
-    void testRegisterBookWithValidInputs() throws Exception {
+    void testRegisterBookWithValidInputs() {
         // Arrange
         String title = "Clean Code";
         String author = "Robert C. Martin";
         String isbn = "978-0132350884";
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = 10;
         
         Book createdBook = new Book();
@@ -64,7 +74,7 @@ class BookServiceTest {
         createdBook.setTitle(title);
         createdBook.setAuthor(author);
         createdBook.setIsbn(isbn);
-        createdBook.setCategory(category);
+        createdBook.setCategory(BookCategory.fromDatabaseValue(category));
         createdBook.setTotalCopies(stock);
         createdBook.setAvailableCopies(stock);
         createdBook.setActive(true);
@@ -83,7 +93,7 @@ class BookServiceTest {
             book.getTitle().equals(title) &&
             book.getAuthor().equals(author) &&
             book.getIsbn().equals(isbn) &&
-            book.getCategory().equals(category) &&
+            book.getCategory().equals(BookCategory.fromDatabaseValue(category)) &&
             book.getTotalCopies().equals(stock) &&
             book.getAvailableCopies().equals(stock) &&
             book.isActive()
@@ -97,13 +107,14 @@ class BookServiceTest {
         String title = "";
         String author = "Robert C. Martin";
         String isbn = "978-0132350884";
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = 10;
 
         // Act & Assert
-        assertThrows(ValidationException.class, () ->
+        ValidationException exception = assertThrows(ValidationException.class, () ->
             bookService.registerBook(title, author, isbn, category, stock, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).create(any());
     }
 
@@ -114,13 +125,14 @@ class BookServiceTest {
         String title = "Clean Code";
         String author = "";
         String isbn = "978-0132350884";
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = 10;
 
         // Act & Assert
-        assertThrows(ValidationException.class, () ->
+        ValidationException exception = assertThrows(ValidationException.class, () ->
             bookService.registerBook(title, author, isbn, category, stock, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).create(any());
     }
 
@@ -131,13 +143,14 @@ class BookServiceTest {
         String title = "Clean Code";
         String author = "Robert C. Martin";
         String isbn = "ABC-123"; // Invalid ISBN
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = 10;
 
         // Act & Assert
-        assertThrows(ValidationException.class, () ->
+        ValidationException exception = assertThrows(ValidationException.class, () ->
             bookService.registerBook(title, author, isbn, category, stock, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).create(any());
     }
 
@@ -148,15 +161,16 @@ class BookServiceTest {
         String title = "Clean Code";
         String author = "Robert C. Martin";
         String isbn = "978-0132350884";
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = 10;
         
         when(bookRepository.existsByIsbn(isbn)).thenReturn(true);
 
         // Act & Assert
-        assertThrows(ValidationException.class, () ->
+        ValidationException exception = assertThrows(ValidationException.class, () ->
             bookService.registerBook(title, author, isbn, category, stock, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, times(1)).existsByIsbn(isbn);
         verify(bookRepository, never()).create(any());
     }
@@ -168,13 +182,14 @@ class BookServiceTest {
         String title = "Clean Code";
         String author = "Robert C. Martin";
         String isbn = "978-0132350884";
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = -5;
 
         // Act & Assert
-        assertThrows(ValidationException.class, () ->
+        ValidationException exception = assertThrows(ValidationException.class, () ->
             bookService.registerBook(title, author, isbn, category, stock, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).create(any());
     }
 
@@ -182,13 +197,13 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should update book with valid inputs")
-    void testUpdateBookWithValidInputs() throws Exception {
+    void testUpdateBookWithValidInputs() {
         // Arrange
         Integer bookId = 1;
         String title = "Clean Code - Updated";
         String author = "Robert C. Martin";
         String isbn = "978-0132350884";
-        String category = "Programming";
+        String category = "TECHNOLOGY";
         Integer stock = 15;
         
         Book existingBook = new Book();
@@ -196,7 +211,7 @@ class BookServiceTest {
         existingBook.setTitle("Clean Code");
         existingBook.setAuthor(author);
         existingBook.setIsbn(isbn);
-        existingBook.setCategory(category);
+        existingBook.setCategory(BookCategory.fromDatabaseValue(category));
         existingBook.setTotalCopies(10);
         existingBook.setAvailableCopies(10);
         existingBook.setActive(true);
@@ -224,9 +239,10 @@ class BookServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () ->
+        BookNotFoundException exception = assertThrows(BookNotFoundException.class, () ->
             bookService.updateBook(bookId, "Title", "Author", validIsbn, "Category", 10, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).update(any());
     }
 
@@ -243,7 +259,7 @@ class BookServiceTest {
         bookToUpdate.setTitle("Original Title");
         bookToUpdate.setAuthor("Original Author");
         bookToUpdate.setIsbn(originalIsbn);
-        bookToUpdate.setCategory("Category");
+        bookToUpdate.setCategory(BookCategory.LITERATURE); // Use enum directly for test
         bookToUpdate.setTotalCopies(10);
         bookToUpdate.setAvailableCopies(10);
         bookToUpdate.setActive(true);
@@ -252,9 +268,10 @@ class BookServiceTest {
         when(bookRepository.existsByIsbn(newIsbn)).thenReturn(true);
 
         // Act & Assert
-        assertThrows(ValidationException.class, () ->
+        ValidationException exception = assertThrows(ValidationException.class, () ->
             bookService.updateBook(bookId, "Title", "Author", newIsbn, "Category", 10, null)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).update(any());
     }
 
@@ -334,7 +351,7 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should deactivate book successfully")
-    void testDeactivateBook() throws Exception {
+    void testDeactivateBook() {
         // Arrange
         Integer bookId = 1;
         Book book = new Book();
@@ -359,15 +376,16 @@ class BookServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () ->
+        BookNotFoundException exception = assertThrows(BookNotFoundException.class, () ->
             bookService.deactivateBook(bookId)
         );
+        assertNotNull(exception);
         verify(bookRepository, never()).update(any());
     }
 
     @Test
     @DisplayName("Should activate book successfully")
-    void testActivateBook() throws Exception {
+    void testActivateBook() {
         // Arrange
         Integer bookId = 1;
         Book book = new Book();
@@ -388,7 +406,7 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should return true when book is available for loan")
-    void testIsAvailableForLoanReturnsTrue() throws Exception {
+    void testIsAvailableForLoanReturnsTrue() {
         // Arrange
         Integer bookId = 1;
         Book book = new Book();
@@ -407,7 +425,7 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should return false when book has no stock")
-    void testIsAvailableForLoanReturnsFalseWhenNoStock() throws Exception {
+    void testIsAvailableForLoanReturnsFalseWhenNoStock() {
         // Arrange
         Integer bookId = 1;
         Book book = new Book();
@@ -426,7 +444,7 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should return false when book is inactive")
-    void testIsAvailableForLoanReturnsFalseWhenInactive() throws Exception {
+    void testIsAvailableForLoanReturnsFalseWhenInactive() {
         // Arrange
         Integer bookId = 1;
         Book book = new Book();
@@ -451,9 +469,10 @@ class BookServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () ->
+        BookNotFoundException exception = assertThrows(BookNotFoundException.class, () ->
             bookService.isAvailableForLoan(bookId)
         );
+        assertNotNull(exception);
     }
 
     // ==================== GET BOOKS TESTS ====================
@@ -487,7 +506,7 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Should return book by ID")
-    void testGetBookById() throws Exception {
+    void testGetBookById() {
         // Arrange
         Integer bookId = 1;
         Book book = new Book();
@@ -513,8 +532,9 @@ class BookServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () ->
+        BookNotFoundException exception = assertThrows(BookNotFoundException.class, () ->
             bookService.getBookById(bookId)
         );
+        assertNotNull(exception);
     }
 }

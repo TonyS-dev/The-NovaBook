@@ -7,6 +7,38 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
+-- ENUM: book_category
+-- Book categories for classification
+-- ============================================
+CREATE TYPE book_category AS ENUM (
+    'LITERATURE',
+    'SCIENCE_FICTION',
+    'CHILDREN',
+    'CLASSICS',
+    'FICTION',
+    'FANTASY',
+    'ROMANCE',
+    'MYSTERY',
+    'BIOGRAPHY',
+    'HISTORY',
+    'SCIENCE',
+    'TECHNOLOGY',
+    'BUSINESS',
+    'SELF_HELP',
+    'ART',
+    'TRAVEL',
+    'COOKING',
+    'POETRY',
+    'DRAMA',
+    'RELIGION',
+    'PHILOSOPHY',
+    'EDUCATION',
+    'COMICS',
+    'HORROR',
+    'OTHER'
+);
+
+-- ============================================
 -- TABLE: users
 -- System users (ADMIN/ASSISTANT roles)
 -- Manages authentication and authorization
@@ -50,7 +82,7 @@ CREATE TABLE IF NOT EXISTS books (
     isbn VARCHAR(20) NOT NULL UNIQUE,
     title VARCHAR(200) NOT NULL,
     author VARCHAR(150) NOT NULL,
-    category VARCHAR(50) NOT NULL,
+    category book_category NOT NULL,
     total_copies INT NOT NULL DEFAULT 1 CHECK (total_copies >= 0),
     available_copies INT NOT NULL DEFAULT 1 CHECK (available_copies >= 0),
     reference_price DECIMAL(10, 2),
@@ -80,6 +112,21 @@ CREATE TABLE IF NOT EXISTS loans (
 );
 
 -- ============================================
+-- TABLE: system_config
+-- Stores system-wide configuration parameters
+-- ============================================
+CREATE TABLE IF NOT EXISTS system_config (
+    id SERIAL PRIMARY KEY,
+    config_key VARCHAR(100) NOT NULL UNIQUE,
+    config_value VARCHAR(255) NOT NULL,
+    data_type VARCHAR(20) NOT NULL CHECK (data_type IN ('STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN')),
+    description TEXT,
+    is_editable BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
 -- INDEXES for Query Optimization
 -- ============================================
 
@@ -101,6 +148,9 @@ CREATE INDEX idx_loans_book ON loans(book_id);
 CREATE INDEX idx_loans_status ON loans(status);
 CREATE INDEX idx_loans_loan_date ON loans(loan_date);
 CREATE INDEX idx_loans_expected_return ON loans(expected_return_date);
+
+-- Index for config
+CREATE INDEX idx_config_key ON system_config(config_key);
 
 -- ============================================
 -- TRIGGERS for Automatic Updates
@@ -133,6 +183,11 @@ EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER trg_loans_updated_at
 BEFORE UPDATE ON loans
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trg_config_updated_at
+BEFORE UPDATE ON system_config
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
@@ -190,28 +245,53 @@ EXECUTE FUNCTION calculate_loan_fine();
 -- SEED DATA (Initial Test Data)
 -- ============================================
 
+-- Default system users (password: admin123 and assistant123 - hashed)
+INSERT INTO users (name, email, password, phone, role, status)
+VALUES
+    ('Admin User', 'admin@novabook.com', '$2a$10$8qvVzKGN5xH0p6jqK.8pJeDqYQvjYZYqX6v2HqH0p6jqK.8pJe', '55500000', 'ADMIN', 'ACTIVE'),
+    ('Assistant User', 'assistant@novabook.com', '$2a$10$8qvVzKGN5xH0p6jqK.8pJeDqYQvjYZYqX6v2HqH0p6jqK.8pJe', '55500001', 'ASSISTANT', 'ACTIVE')
+ON CONFLICT (email) DO NOTHING;
+
+-- Default system configuration
+INSERT INTO system_config (config_key, config_value, data_type, description, is_editable) 
+VALUES 
+    ('DEFAULT_LOAN_DAYS', '14', 'INTEGER', 'Default number of days for a loan', TRUE),
+    ('DAILY_FINE_AMOUNT', '1500.00', 'DECIMAL', 'Fine amount per day for overdue loans (in local currency)', TRUE),
+    ('MAX_ACTIVE_LOANS', '3', 'INTEGER', 'Maximum number of active loans per member', TRUE),
+    ('MAX_LOAN_EXTENSION_DAYS', '7', 'INTEGER', 'Maximum days a loan can be extended', TRUE),
+    ('LOAN_DUE_REMINDER_DAYS', '3', 'INTEGER', 'Days before due date to send reminder', TRUE),
+    ('SYSTEM_NAME', 'NovaBook Library Management', 'STRING', 'System name displayed in UI', FALSE),
+    ('CURRENCY_SYMBOL', '$', 'STRING', 'Currency symbol for prices and fines', TRUE),
+    ('ALLOW_LOAN_EXTENSIONS', 'true', 'BOOLEAN', 'Allow members to extend loans', TRUE),
+    ('AUTO_SUSPEND_ON_OVERDUE', 'false', 'BOOLEAN', 'Automatically suspend members with overdue loans', TRUE),
+    ('NOTIFICATION_EMAIL_ENABLED', 'false', 'BOOLEAN', 'Enable email notifications', TRUE)
+ON CONFLICT (config_key) DO UPDATE 
+SET config_value = EXCLUDED.config_value,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
 -- Sample members
 INSERT INTO members (first_name, last_name, document_id, email, phone, address, status, registration_date) 
 VALUES 
-    ('Juan', 'Pérez', '1234567890', 'juan.perez@email.com', '555-1001', 'Calle 123 #45-67', 'ACTIVE', CURRENT_DATE - INTERVAL '6 months'),
-    ('María', 'González', '0987654321', 'maria.gonzalez@email.com', '555-1002', 'Carrera 45 #12-34', 'ACTIVE', CURRENT_DATE - INTERVAL '8 months'),
-    ('Carlos', 'Rodríguez', '1122334455', 'carlos.rodriguez@email.com', '555-1003', 'Avenida 68 #23-45', 'ACTIVE', CURRENT_DATE - INTERVAL '4 months'),
-    ('Ana', 'Martínez', '5544332211', 'ana.martinez@email.com', '555-1004', 'Calle 50 #10-20', 'ACTIVE', CURRENT_DATE - INTERVAL '3 months'),
-    ('Pedro', 'López', '6677889900', 'pedro.lopez@email.com', '555-1005', 'Carrera 7 #15-30', 'SUSPENDED', CURRENT_DATE - INTERVAL '1 year'),
-    ('Laura', 'Hernández', '9988776655', 'laura.hernandez@email.com', '555-1006', 'Calle 80 #25-50', 'ACTIVE', CURRENT_DATE - INTERVAL '2 months')
+    ('Juan', 'Pérez', '1234567890', 'juan.perez@email.com', '55501001', 'Calle 123 #45-67', 'ACTIVE', CURRENT_DATE - INTERVAL '6 months'),
+    ('María', 'González', '0987654321', 'maria.gonzalez@email.com', '55501002', 'Carrera 45 #12-34', 'ACTIVE', CURRENT_DATE - INTERVAL '8 months'),
+    ('Carlos', 'Rodríguez', '1122334455', 'carlos.rodriguez@email.com', '55501003', 'Avenida 68 #23-45', 'ACTIVE', CURRENT_DATE - INTERVAL '4 months'),
+    ('Ana', 'Martínez', '5544332211', 'ana.martinez@email.com', '55501004', 'Calle 50 #10-20', 'ACTIVE', CURRENT_DATE - INTERVAL '3 months'),
+    ('Pedro', 'López', '6677889900', 'pedro.lopez@email.com', '55501005', 'Carrera 7 #15-30', 'SUSPENDED', CURRENT_DATE - INTERVAL '1 year'),
+    ('Laura', 'Hernández', '9988776655', 'laura.hernandez@email.com', '55501006', 'Calle 80 #25-50', 'ACTIVE', CURRENT_DATE - INTERVAL '2 months')
 ON CONFLICT (document_id) DO NOTHING;
 
 -- Sample books catalog
 INSERT INTO books (isbn, title, author, category, total_copies, available_copies, reference_price, is_active) 
 VALUES 
-    ('978-3-16-148410-0', 'One Hundred Years of Solitude', 'Gabriel García Márquez', 'Literature', 5, 3, 45000, TRUE),
-    ('978-0-7432-7356-5', '1984', 'George Orwell', 'Science Fiction', 3, 1, 38000, TRUE),
-    ('978-0-14-017739-8', 'The Little Prince', 'Antoine de Saint-Exupéry', 'Children', 4, 3, 25000, TRUE),
-    ('978-84-376-0494-7', 'Don Quixote', 'Miguel de Cervantes', 'Classics', 2, 1, 55000, TRUE),
-    ('978-0-06-112008-4', 'To Kill a Mockingbird', 'Harper Lee', 'Fiction', 3, 2, 42000, TRUE),
-    ('978-0-7475-3269-9', 'Harry Potter and the Philosopher Stone', 'J.K. Rowling', 'Fantasy', 6, 5, 35000, TRUE),
-    ('978-0-452-28423-4', 'The Catcher in the Rye', 'J.D. Salinger', 'Fiction', 4, 3, 40000, TRUE),
-    ('978-0-316-76948-0', 'Pride and Prejudice', 'Jane Austen', 'Romance', 3, 2, 48000, TRUE)
+    ('978-3-16-148410-0', 'One Hundred Years of Solitude', 'Gabriel García Márquez', 'LITERATURE', 5, 3, 45000, TRUE),
+    ('978-0-7432-7356-5', '1984', 'George Orwell', 'SCIENCE_FICTION', 3, 1, 38000, TRUE),
+    ('978-0-14-017739-8', 'The Little Prince', 'Antoine de Saint-Exupéry', 'CHILDREN', 4, 3, 25000, TRUE),
+    ('978-84-376-0494-7', 'Don Quixote', 'Miguel de Cervantes', 'CLASSICS', 2, 1, 55000, TRUE),
+    ('978-0-06-112008-4', 'To Kill a Mockingbird', 'Harper Lee', 'FICTION', 3, 2, 42000, TRUE),
+    ('978-0-7475-3269-9', 'Harry Potter and the Philosopher Stone', 'J.K. Rowling', 'FANTASY', 6, 5, 35000, TRUE),
+    ('978-0-452-28423-4', 'The Catcher in the Rye', 'J.D. Salinger', 'FICTION', 4, 3, 40000, TRUE),
+    ('978-0-316-76948-0', 'Pride and Prejudice', 'Jane Austen', 'ROMANCE', 3, 2, 48000, TRUE)
 ON CONFLICT (isbn) DO NOTHING;
 
 -- Sample loans: Mix of active, returned, and OVERDUE loans
@@ -332,10 +412,16 @@ COMMENT ON TABLE users IS 'System users with ADMIN or ASSISTANT roles for authen
 COMMENT ON TABLE members IS 'Library members who can request book loans';
 COMMENT ON TABLE books IS 'Complete book catalog with inventory management';
 COMMENT ON TABLE loans IS 'Loan and return transaction records';
+COMMENT ON TABLE system_config IS 'System-wide configuration parameters';
 
 COMMENT ON COLUMN books.isbn IS 'Unique ISBN code (validated at service layer)';
 COMMENT ON COLUMN books.available_copies IS 'Current stock available for lending';
+COMMENT ON COLUMN books.category IS 'Book category from predefined ENUM types';
 COMMENT ON COLUMN loans.fine IS 'Fine calculated automatically based on overdue days';
 COMMENT ON COLUMN loans.loan_days IS 'Number of days allowed for the loan (default: 7)';
 COMMENT ON COLUMN users.role IS 'User role: ADMIN (full access) or ASSISTANT (limited access)';
 COMMENT ON COLUMN members.status IS 'Member status: ACTIVE, INACTIVE, or SUSPENDED';
+COMMENT ON COLUMN system_config.config_key IS 'Unique configuration key (e.g., DEFAULT_LOAN_DAYS)';
+COMMENT ON COLUMN system_config.config_value IS 'Configuration value stored as string';
+COMMENT ON COLUMN system_config.data_type IS 'Data type for proper parsing (STRING, INTEGER, DECIMAL, BOOLEAN)';
+COMMENT ON COLUMN system_config.is_editable IS 'Whether this configuration can be modified via UI';

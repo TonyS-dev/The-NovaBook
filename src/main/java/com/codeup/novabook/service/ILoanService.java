@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.codeup.novabook.domain.Loan;
+import com.codeup.novabook.domain.LoanStatus;
 import com.codeup.novabook.exception.BookNotAvailableException;
 import com.codeup.novabook.exception.BookNotFoundException;
 import com.codeup.novabook.exception.LoanAlreadyClosedException;
@@ -87,6 +88,26 @@ public interface ILoanService {
     Loan createLoan(Integer memberId, Integer bookId, LocalDate dueDate) 
             throws MemberNotFoundException, BookNotFoundException, 
                    BookNotAvailableException, ValidationException;
+
+    /**
+     * Restores a historical loan from CSV import.
+     * This method bypasses normal validation and doesn't decrease book stock.
+     * Used only for importing historical loan data to preserve dates and status.
+     * 
+     * @param memberId the member ID
+     * @param bookId the book ID
+     * @param loanDate the original loan date
+     * @param dueDate the original due date
+     * @param returnDate the return date (null if not returned)
+     * @param status the loan status
+     * @return the restored Loan with generated ID
+     * @throws MemberNotFoundException if member doesn't exist
+     * @throws BookNotFoundException if book doesn't exist
+     */
+    Loan restoreHistoricalLoan(Integer memberId, Integer bookId, 
+                               LocalDate loanDate, LocalDate dueDate, 
+                               LocalDate returnDate, LoanStatus status)
+            throws MemberNotFoundException, BookNotFoundException;
 
     /**
      * Returns a loan with TRANSACTION MANAGEMENT.

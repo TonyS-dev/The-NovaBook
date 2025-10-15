@@ -1,0 +1,7 @@
+ID,Document Number,First Name,Last Name,Email,Phone,Address,Registration Date,Status
+6,9988776655,Laura,Hernández,laura.hernandez@email.com,55501006,Calle 80 #25-50,2025-08-16,ACTIVE
+4,5544332211,Ana,Martínez,ana.martinez@email.com,55501004,Calle 50 #10-20,2025-07-16,ACTIVE
+3,1122334455,Carlos,Rodríguez,carlos.rodriguez@email.com,55501003,Avenida 68 #23-45,2025-06-16,ACTIVE
+1,1234567890,Juan,Pérez,juan.perez@email.com,55501001,Calle 123 #45-67,2025-04-16,ACTIVE
+2,0987654321,María,González,maria.gonzalez@email.com,55501002,Carrera 45 #12-34,2025-02-16,ACTIVE
+5,6677889900,Pedro,López,pedro.lopez@email.com,55501005,Carrera 7 #15-30,2024-10-16,INACTIVE

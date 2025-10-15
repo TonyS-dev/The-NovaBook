@@ -1,16 +1,19 @@
 package com.codeup.novabook.repo.impl;
 
-import com.codeup.novabook.db.ConnectionFactory;
-import com.codeup.novabook.domain.Book;
-import com.codeup.novabook.jdbc.JdbcTemplateLight;
-import com.codeup.novabook.jdbc.RowMapper;
-import com.codeup.novabook.repo.IBookRepository;
-
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.codeup.novabook.db.ConnectionFactory;
+import com.codeup.novabook.domain.Book;
+import com.codeup.novabook.domain.BookCategory;
+import com.codeup.novabook.jdbc.JdbcTemplateLight;
+import com.codeup.novabook.jdbc.RowMapper;
+import com.codeup.novabook.repo.IBookRepository;
 
 /**
  * JDBC implementation of the IBookRepository interface using JdbcTemplateLight.
@@ -50,7 +53,13 @@ public class BookRepositoryImpl implements IBookRepository {
         book.setIsbn(rs.getString("isbn"));
         book.setTitle(rs.getString("title"));
         book.setAuthor(rs.getString("author"));
-        book.setCategory(rs.getString("category"));
+        
+        // Convert database ENUM value to BookCategory
+        String categoryValue = rs.getString("category");
+        if (categoryValue != null) {
+            book.setCategory(BookCategory.fromDatabaseValue(categoryValue));
+        }
+        
         book.setTotalCopies(rs.getInt("total_copies"));
         book.setAvailableCopies(rs.getInt("available_copies"));
         book.setReferencePrice(rs.getBigDecimal("reference_price"));
@@ -66,7 +75,7 @@ public class BookRepositoryImpl implements IBookRepository {
     public Book create(Book book) {
         String sql = "INSERT INTO books (isbn, title, author, category, total_copies, " +
                      "available_copies, reference_price, is_active) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
+                     "VALUES (?, ?, ?, ?::book_category, ?, ?, ?, ?) RETURNING id";
         
         try {
             return jdbcTemplate.txExecute(conn -> {
@@ -74,7 +83,7 @@ public class BookRepositoryImpl implements IBookRepository {
                     ps.setString(1, book.getIsbn());
                     ps.setString(2, book.getTitle());
                     ps.setString(3, book.getAuthor());
-                    ps.setString(4, book.getCategory());
+                    ps.setString(4, book.getCategory() != null ? book.getCategory().toDatabaseValue() : null);
                     ps.setInt(5, book.getTotalCopies());
                     ps.setInt(6, book.getAvailableCopies());
                     ps.setBigDecimal(7, book.getReferencePrice());
@@ -130,7 +139,7 @@ public class BookRepositoryImpl implements IBookRepository {
     
     @Override
     public Book update(Book book) {
-        String sql = "UPDATE books SET isbn = ?, title = ?, author = ?, category = ?, " +
+        String sql = "UPDATE books SET isbn = ?, title = ?, author = ?, category = ?::book_category, " +
                      "total_copies = ?, available_copies = ?, reference_price = ?, is_active = ? " +
                      "WHERE id = ?";
         
@@ -140,7 +149,7 @@ public class BookRepositoryImpl implements IBookRepository {
                     ps.setString(1, book.getIsbn());
                     ps.setString(2, book.getTitle());
                     ps.setString(3, book.getAuthor());
-                    ps.setString(4, book.getCategory());
+                    ps.setString(4, book.getCategory() != null ? book.getCategory().toDatabaseValue() : null);
                     ps.setInt(5, book.getTotalCopies());
                     ps.setInt(6, book.getAvailableCopies());
                     ps.setBigDecimal(7, book.getReferencePrice());

@@ -1,18 +1,22 @@
 package com.codeup.novabook.repo.impl;
 
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.codeup.novabook.db.ConnectionFactory;
 import com.codeup.novabook.domain.Loan;
 import com.codeup.novabook.domain.LoanStatus;
 import com.codeup.novabook.jdbc.JdbcTemplateLight;
 import com.codeup.novabook.jdbc.RowMapper;
 import com.codeup.novabook.repo.ILoanRepository;
-
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * JDBC implementation of the ILoanRepository interface.
@@ -416,7 +420,11 @@ public class LoanRepositoryImpl implements ILoanRepository {
                     }
                 },
                 rs -> rs.getInt(1));
-            return results.isEmpty() ? 0 : results.get(0);
+            if (results.isEmpty()) {
+                return 0;
+            }
+            Integer result = results.get(0);
+            return result != null ? result : 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error counting loans for member: " + memberId, e);
             throw new RuntimeException("Failed to count loans", e);
@@ -437,7 +445,11 @@ public class LoanRepositoryImpl implements ILoanRepository {
                     }
                 },
                 rs -> rs.getInt(1));
-            return results.isEmpty() ? 0 : results.get(0);
+            if (results.isEmpty()) {
+                return 0;
+            }
+            Integer result = results.get(0);
+            return result != null ? result : 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error counting loans for book: " + bookId, e);
             throw new RuntimeException("Failed to count loans", e);

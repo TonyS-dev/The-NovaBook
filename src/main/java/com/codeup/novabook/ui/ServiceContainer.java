@@ -2,10 +2,11 @@ package com.codeup.novabook.ui;
 
 import com.codeup.novabook.domain.User;
 import com.codeup.novabook.domain.UserRole;
-import com.codeup.novabook.service.IUserService;
-import com.codeup.novabook.service.IMemberService;
 import com.codeup.novabook.service.IBookService;
+import com.codeup.novabook.service.IConfigService;
 import com.codeup.novabook.service.ILoanService;
+import com.codeup.novabook.service.IMemberService;
+import com.codeup.novabook.service.IUserService;
 
 /**
  * Simple Dependency Injection container for managing application services and user session.
@@ -31,7 +32,7 @@ import com.codeup.novabook.service.ILoanService;
  * ILoanService loanService = new LoanServiceImpl(loanRepository);
  * 
  * // Create container
- * ServiceContainer services = new ServiceContainer(userService, memberService, bookService, loanService);
+ * ServiceContainer services = new ServiceContainer(userService, memberService, bookService, loanService, configService);
  * 
  * // Use in UI components
  * LoginView loginView = new LoginView(services);
@@ -61,6 +62,7 @@ import com.codeup.novabook.service.ILoanService;
  * @see IMemberService
  * @see IBookService
  * @see ILoanService
+ * @see IConfigService
  * @see User
  * @see UserRole
  */
@@ -69,6 +71,7 @@ public class ServiceContainer {
     private final IMemberService memberService;
     private final IBookService bookService;
     private final ILoanService loanService;
+    private final IConfigService configService;
     private User currentUser;
     
     /**
@@ -81,14 +84,17 @@ public class ServiceContainer {
      * @param memberService the member management service
      * @param bookService the book management service
      * @param loanService the loan management service
+     * @param configService the system configuration service
      * @throws NullPointerException if any service is null
      */
     public ServiceContainer(IUserService userService, IMemberService memberService, 
-                          IBookService bookService, ILoanService loanService) {
+                          IBookService bookService, ILoanService loanService, 
+                          IConfigService configService) {
         this.userService = userService;
         this.memberService = memberService;
         this.bookService = bookService;
         this.loanService = loanService;
+        this.configService = configService;
     }
     
     /**
@@ -125,6 +131,15 @@ public class ServiceContainer {
      */
     public ILoanService getLoanService() { 
         return loanService; 
+    }
+    
+    /**
+     * Gets the system configuration service.
+     * 
+     * @return the configuration service instance
+     */
+    public IConfigService getConfigService() { 
+        return configService; 
     }
     
     /**

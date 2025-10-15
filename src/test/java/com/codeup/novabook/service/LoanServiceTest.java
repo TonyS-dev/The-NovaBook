@@ -1,5 +1,26 @@
 package com.codeup.novabook.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
 import com.codeup.novabook.domain.Book;
 import com.codeup.novabook.domain.Loan;
 import com.codeup.novabook.domain.LoanStatus;
@@ -15,20 +36,6 @@ import com.codeup.novabook.repo.IBookRepository;
 import com.codeup.novabook.repo.ILoanRepository;
 import com.codeup.novabook.repo.IMemberRepository;
 import com.codeup.novabook.service.impl.LoanServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for LoanService with Mockito.
@@ -43,20 +50,25 @@ class LoanServiceTest {
 
     @Mock
     private IBookRepository bookRepository;
+    
+    @Mock
+    private IConfigService configService;
 
     private ILoanService loanService;
 
     @BeforeEach
+    @SuppressWarnings("unused") // Called by JUnit before each test
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        loanService = new LoanServiceImpl(loanRepository, memberRepository, bookRepository);
+        when(configService.getMaxActiveLoans()).thenReturn(3); // Default max loans
+        loanService = new LoanServiceImpl(loanRepository, memberRepository, bookRepository, configService);
     }
 
     // ==================== CREATE LOAN TESTS ====================
 
     @Test
     @DisplayName("Should create loan with valid inputs")
-    void testCreateLoanSuccess() throws Exception {
+    void testCreateLoanSuccess() {
         // Arrange
         Integer memberId = 1;
         Integer bookId = 1;
@@ -110,9 +122,10 @@ class LoanServiceTest {
         when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(MemberNotFoundException.class, () -> {
+        MemberNotFoundException exception = assertThrows(MemberNotFoundException.class, () -> {
             loanService.createLoan(memberId, bookId, dueDate);
         });
+        assertNotNull(exception);
 
         verify(memberRepository, times(1)).findById(memberId);
         verify(loanRepository, never()).create(any(Loan.class));
@@ -134,9 +147,10 @@ class LoanServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () -> {
+        BookNotFoundException exception = assertThrows(BookNotFoundException.class, () -> {
             loanService.createLoan(memberId, bookId, dueDate);
         });
+        assertNotNull(exception);
 
         verify(bookRepository, times(1)).findById(bookId);
         verify(loanRepository, never()).create(any(Loan.class));
@@ -163,9 +177,10 @@ class LoanServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(inactiveBook));
 
         // Act & Assert
-        assertThrows(BookNotAvailableException.class, () -> {
+        BookNotAvailableException exception = assertThrows(BookNotAvailableException.class, () -> {
             loanService.createLoan(memberId, bookId, dueDate);
         });
+        assertNotNull(exception);
 
         verify(loanRepository, never()).create(any(Loan.class));
     }
@@ -191,9 +206,10 @@ class LoanServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(bookWithNoStock));
 
         // Act & Assert
-        assertThrows(BookNotAvailableException.class, () -> {
+        BookNotAvailableException exception = assertThrows(BookNotAvailableException.class, () -> {
             loanService.createLoan(memberId, bookId, dueDate);
         });
+        assertNotNull(exception);
 
         verify(loanRepository, never()).create(any(Loan.class));
     }
@@ -202,7 +218,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should return loan without fine when not overdue")
-    void testReturnLoanNotOverdue() throws Exception {
+    void testReturnLoanNotOverdue() {
         // Arrange
         Integer loanId = 1;
         BigDecimal fineRate = new BigDecimal("0.50");
@@ -240,7 +256,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should return loan with fine when overdue")
-    void testReturnLoanOverdue() throws Exception {
+    void testReturnLoanOverdue() {
         // Arrange
         Integer loanId = 1;
         BigDecimal fineRate = new BigDecimal("0.50");
@@ -285,9 +301,10 @@ class LoanServiceTest {
         when(loanRepository.findById(loanId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(LoanNotFoundException.class, () -> {
+        LoanNotFoundException exception = assertThrows(LoanNotFoundException.class, () -> {
             loanService.returnLoan(loanId, fineRate);
         });
+        assertNotNull(exception);
 
         verify(loanRepository, times(1)).findById(loanId);
         verify(loanRepository, never()).update(any(Loan.class));
@@ -307,9 +324,10 @@ class LoanServiceTest {
         when(loanRepository.findById(loanId)).thenReturn(Optional.of(closedLoan));
 
         // Act & Assert
-        assertThrows(LoanAlreadyClosedException.class, () -> {
+        LoanAlreadyClosedException exception = assertThrows(LoanAlreadyClosedException.class, () -> {
             loanService.returnLoan(loanId, fineRate);
         });
+        assertNotNull(exception);
 
         verify(loanRepository, never()).update(any(Loan.class));
     }
@@ -318,7 +336,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should extend loan with valid new due date")
-    void testExtendLoanSuccess() throws Exception {
+    void testExtendLoanSuccess() {
         // Arrange
         Integer loanId = 1;
         LocalDate currentDueDate = LocalDate.now().plusDays(7);
@@ -352,20 +370,19 @@ class LoanServiceTest {
     void testExtendLoanInvalidDate() {
         // Arrange
         Integer loanId = 1;
-        LocalDate currentDueDate = LocalDate.now().plusDays(7);
         LocalDate newDueDate = LocalDate.now().plusDays(3); // Before current
 
         Loan activeLoan = new Loan();
         activeLoan.setId(loanId);
         activeLoan.setStatus(LoanStatus.ACTIVE);
-        activeLoan.setExpectedReturnDate(currentDueDate);
 
         when(loanRepository.findById(loanId)).thenReturn(Optional.of(activeLoan));
 
         // Act & Assert
-        assertThrows(ValidationException.class, () -> {
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
             loanService.extendLoan(loanId, newDueDate);
         });
+        assertNotNull(exception);
 
         verify(loanRepository, never()).update(any(Loan.class));
     }
@@ -374,7 +391,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should calculate zero fine when not overdue")
-    void testCalculateFineNotOverdue() throws Exception {
+    void testCalculateFineNotOverdue() {
         // Arrange
         Integer loanId = 1;
         BigDecimal fineRate = new BigDecimal("0.50");
@@ -394,7 +411,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should calculate fine when overdue")
-    void testCalculateFineOverdue() throws Exception {
+    void testCalculateFineOverdue() {
         // Arrange
         Integer loanId = 1;
         BigDecimal fineRate = new BigDecimal("0.50");
@@ -416,7 +433,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should get loan by ID")
-    void testGetLoanById() throws Exception {
+    void testGetLoanById() {
         // Arrange
         Integer loanId = 1;
 
@@ -440,14 +457,15 @@ class LoanServiceTest {
     @DisplayName("Should throw LoanNotFoundException when loan does not exist")
     void testGetLoanByIdNotFound() {
         // Arrange
-        Integer loanId = 999;
+        Integer loanId = 1;
 
         when(loanRepository.findById(loanId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(LoanNotFoundException.class, () -> {
+        LoanNotFoundException exception = assertThrows(LoanNotFoundException.class, () -> {
             loanService.getLoanById(loanId);
         });
+        assertNotNull(exception);
     }
 
     @Test
@@ -473,7 +491,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should get active loans by member")
-    void testGetActiveLoansByMember() throws Exception {
+    void testGetActiveLoansByMember() {
         // Arrange
         Integer memberId = 1;
 
@@ -523,7 +541,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should return true when member is eligible for loan")
-    void testIsEligibleForLoanTrue() throws Exception {
+    void testIsEligibleForLoanTrue() {
         // Arrange
         Integer memberId = 1;
         Integer maxLoans = 3;
@@ -551,7 +569,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should return false when member has reached max loans")
-    void testIsEligibleForLoanMaxReached() throws Exception {
+    void testIsEligibleForLoanMaxReached() {
         // Arrange
         Integer memberId = 1;
         Integer maxLoans = 3;
@@ -581,7 +599,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should return false when member has overdue loans")
-    void testIsEligibleForLoanHasOverdue() throws Exception {
+    void testIsEligibleForLoanHasOverdue() {
         // Arrange
         Integer memberId = 1;
         Integer maxLoans = 3;
@@ -606,7 +624,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should count active loans by member")
-    void testCountActiveLoansByMember() throws Exception {
+    void testCountActiveLoansByMember() {
         // Arrange
         Integer memberId = 1;
 
@@ -628,7 +646,7 @@ class LoanServiceTest {
 
     @Test
     @DisplayName("Should check if member has overdue loans")
-    void testHasOverdueLoans() throws Exception {
+    void testHasOverdueLoans() {
         // Arrange
         Integer memberId = 1;
 

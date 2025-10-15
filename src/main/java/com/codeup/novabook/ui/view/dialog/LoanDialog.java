@@ -1,22 +1,33 @@
 package com.codeup.novabook.ui.view.dialog;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import com.codeup.novabook.domain.Book;
 import com.codeup.novabook.domain.Loan;
 import com.codeup.novabook.domain.Member;
+import com.codeup.novabook.exception.BookNotAvailableException;
+import com.codeup.novabook.exception.BookNotFoundException;
+import com.codeup.novabook.exception.MemberNotFoundException;
+import com.codeup.novabook.exception.ValidationException;
 import com.codeup.novabook.service.IBookService;
+import com.codeup.novabook.service.IConfigService;
 import com.codeup.novabook.service.ILoanService;
 import com.codeup.novabook.service.IMemberService;
+
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Dialog for creating new book loans.
@@ -27,6 +38,7 @@ public class LoanDialog extends Stage {
     private final ILoanService loanService;
     private final IMemberService memberService;
     private final IBookService bookService;
+    private final IConfigService configService;
     
     private ComboBox<Member> memberCombo;
     private ComboBox<Book> bookCombo;
@@ -36,10 +48,12 @@ public class LoanDialog extends Stage {
     private boolean confirmed = false;
     private Loan resultLoan;
     
-    public LoanDialog(ILoanService loanService, IMemberService memberService, IBookService bookService) {
+    public LoanDialog(ILoanService loanService, IMemberService memberService, 
+                     IBookService bookService, IConfigService configService) {
         this.loanService = loanService;
         this.memberService = memberService;
         this.bookService = bookService;
+        this.configService = configService;
         
         initModality(Modality.APPLICATION_MODAL);
         setTitle("Create New Loan");  // Removed emoji for compatibility
@@ -81,10 +95,11 @@ public class LoanDialog extends Stage {
         availableLabel.setStyle("-fx-font-size: 11; -fx-text-fill: gray;");
         grid.add(availableLabel, 1, 2);
         
-        // Due date picker
+        // Due date picker - use default loan duration from config
         Label dueDateLabel = new Label("Due Date *");
         dueDatePicker = new DatePicker();
-        dueDatePicker.setValue(LocalDate.now().plusDays(14)); // Default: 2 weeks
+        int defaultDuration = configService.getDefaultLoanDays();
+        dueDatePicker.setValue(LocalDate.now().plusDays(defaultDuration));
         dueDatePicker.setPrefWidth(200);
         grid.add(dueDateLabel, 0, 3);
         grid.add(dueDatePicker, 1, 3);
@@ -190,7 +205,7 @@ public class LoanDialog extends Stage {
             confirmed = true;
             close();
             
-        } catch (Exception e) {
+        } catch (BookNotAvailableException | BookNotFoundException | MemberNotFoundException | ValidationException e) {
             showError("Error creating loan: " + e.getMessage());
         }
     }

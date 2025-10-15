@@ -1,10 +1,10 @@
 package com.codeup.novabook.repo;
 
-import com.codeup.novabook.domain.Loan;
-import com.codeup.novabook.domain.LoanStatus;
-
 import java.time.LocalDate;
 import java.util.List;
+
+import com.codeup.novabook.domain.Loan;
+import com.codeup.novabook.domain.LoanStatus;
 
 /**
  * Repository interface for Loan entity operations.

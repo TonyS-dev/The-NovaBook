@@ -10,7 +10,11 @@ import com.codeup.novabook.ui.ServiceContainer;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
@@ -241,14 +245,14 @@ public class LoginView extends BaseView {
             String password = "";
             
             switch (selectedRole) {
-                case "Admin":
+                case "Admin" -> {
                     email = "admin@mail.com";
                     password = "Admin123!";
-                    break;
-                case "Assistant":
+                }
+                case "Assistant" -> {
                     email = "asistente@mail.com";
                     password = "Asist123!";
-                    break;
+                }
             }
             
             try {
@@ -261,8 +265,10 @@ public class LoginView extends BaseView {
                     DashboardView dashboard = new DashboardView(services);
                     dashboard.show(stage);
                 } else {
-                    showError("Test mode failed - User not found in database.\n\n" +
-                            "Please ensure the database has been initialized with seed data.");
+                    showError("""
+                              Test mode failed - User not found in database.
+                              
+                              Please ensure the database has been initialized with seed data.""");
                 }
             } catch (AuthenticationException e) {
                 showError("Test mode error: " + e.getMessage());

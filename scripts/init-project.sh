@@ -19,7 +19,7 @@ docker compose up -d db
 # Wait for postgres to accept connections
 echo "Waiting for Postgres to be ready..."
 
-MAX_RETRIES=30
+MAX_RETRIES=90
 COUNT=0
 # Load .env values (export them) so we can support POSTGRES_* or DB_* naming
 if [ -f "$ROOT_DIR/.env" ]; then

@@ -1,8 +1,10 @@
 package com.codeup.novabook.ui.view.dialog;
 
 import com.codeup.novabook.domain.Book;
+import com.codeup.novabook.domain.BookCategory;
 import com.codeup.novabook.exception.ValidationException;
 import com.codeup.novabook.service.IBookService;
+
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -10,8 +12,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
 import java.util.Optional;
+
+import com.codeup.novabook.exception.BookNotFoundException;
 
 /**
  * Dialog for creating or editing books in the library system.
@@ -25,7 +30,7 @@ public class BookDialog extends Stage {
     private TextField isbnField;
     private TextField titleField;
     private TextField authorField;
-    private TextField categoryField;
+    private ComboBox<BookCategory> categoryCombo;
     private Spinner<Integer> totalCopiesSpinner;
     private TextField referencePriceField;
     
@@ -83,12 +88,28 @@ public class BookDialog extends Stage {
         grid.add(authorLabel, 0, 2);
         grid.add(authorField, 1, 2);
         
-        // Category field
+        // Category ComboBox with enum values
         Label categoryLabel = new Label("Category");
-        categoryField = new TextField();
-        categoryField.setPromptText("Fiction, Science, History...");
+        categoryCombo = new ComboBox<>();
+        categoryCombo.getItems().addAll(BookCategory.values());
+        categoryCombo.setPromptText("Select a category...");
+        categoryCombo.setPrefWidth(300);
+        
+        // Set up StringConverter to display friendly names
+        categoryCombo.setConverter(new StringConverter<BookCategory>() {
+            @Override
+            public String toString(BookCategory category) {
+                return category != null ? category.getDisplayName() : "";
+            }
+            
+            @Override
+            public BookCategory fromString(String string) {
+                return BookCategory.fromDisplayName(string);
+            }
+        });
+        
         grid.add(categoryLabel, 0, 3);
-        grid.add(categoryField, 1, 3);
+        grid.add(categoryCombo, 1, 3);
         
         // Total copies spinner
         Label copiesLabel = new Label("Total Copies *");
@@ -141,7 +162,12 @@ public class BookDialog extends Stage {
         isbnField.setText(existingBook.getIsbn());
         titleField.setText(existingBook.getTitle());
         authorField.setText(existingBook.getAuthor());
-        categoryField.setText(existingBook.getCategory() != null ? existingBook.getCategory() : "");
+        
+        // Set the selected category
+        if (existingBook.getCategory() != null) {
+            categoryCombo.setValue(existingBook.getCategory());
+        }
+        
         totalCopiesSpinner.getValueFactory().setValue(existingBook.getTotalCopies());
         
         if (existingBook.getReferencePrice() != null) {
@@ -155,7 +181,7 @@ public class BookDialog extends Stage {
             String isbn = isbnField.getText().trim();
             String title = titleField.getText().trim();
             String author = authorField.getText().trim();
-            String category = categoryField.getText().trim();
+            BookCategory category = categoryCombo.getValue(); // Get selected category
             Integer totalCopies = totalCopiesSpinner.getValue();
             
             if (isbn.isEmpty()) {
@@ -208,6 +234,13 @@ public class BookDialog extends Stage {
                         referencePriceField.requestFocus();
                         return;
                     }
+                    // Database constraint: DECIMAL(10, 2) - max value is 99,999,999.99
+                    java.math.BigDecimal maxPrice = new java.math.BigDecimal("99999999.99");
+                    if (referencePrice.compareTo(maxPrice) > 0) {
+                        showError("Price is too large. Maximum allowed: 99,999,999.99");
+                        referencePriceField.requestFocus();
+                        return;
+                    }
                 } catch (NumberFormatException e) {
                     showError("Invalid price format. Use numbers only (e.g., 45000.00)");
                     referencePriceField.requestFocus();
@@ -216,14 +249,17 @@ public class BookDialog extends Stage {
             }
             
             // Save via service (using method signatures from IBookService)
+            // Convert BookCategory to String for database storage
+            String categoryString = (category != null) ? category.toDatabaseValue() : null;
+            
             if (existingBook == null) {
                 // registerBook(String title, String author, String isbn, String category, Integer stock, BigDecimal referencePrice)
                 resultBook = bookService.registerBook(title, author, isbn, 
-                        category.isEmpty() ? null : category, totalCopies, referencePrice);
+                        categoryString, totalCopies, referencePrice);
             } else {
                 // updateBook(Integer bookId, String title, String author, String isbn, String category, Integer stock, BigDecimal referencePrice)
                 resultBook = bookService.updateBook(existingBook.getId(), title, author, isbn,
-                        category.isEmpty() ? null : category, totalCopies, referencePrice);
+                        categoryString, totalCopies, referencePrice);
             }
             
             confirmed = true;
@@ -231,7 +267,7 @@ public class BookDialog extends Stage {
             
         } catch (ValidationException e) {
             showError("Validation error: " + e.getMessage());
-        } catch (Exception e) {
+        } catch (BookNotFoundException e) {
             showError("Error saving book: " + e.getMessage());
         }
     }

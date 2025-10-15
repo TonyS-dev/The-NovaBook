@@ -1,0 +1,5 @@
+Loan ID,Member ID,Member Name,Member Document,Book ID,Book Title,Book ISBN,Due Date,Days Overdue,Status
+4,5,Pedro López,6677889900,8,Pride and Prejudice,978-0-316-76948-0,2025-09-23,23,OVERDUE
+1,1,Juan Pérez,1234567890,1,One Hundred Years of Solitude,978-3-16-148410-0,2025-09-28,18,OVERDUE
+2,2,María González,0987654321,2,1984,978-0-7432-7356-5,2025-10-03,13,OVERDUE
+3,3,Carlos Rodríguez,1122334455,4,Don Quixote,978-84-376-0494-7,2025-10-08,8,OVERDUE

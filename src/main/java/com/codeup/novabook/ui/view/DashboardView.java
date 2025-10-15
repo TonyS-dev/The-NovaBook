@@ -1,30 +1,48 @@
 package com.codeup.novabook.ui.view;
 
+import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import com.codeup.novabook.domain.Book;
 import com.codeup.novabook.domain.Loan;
 import com.codeup.novabook.domain.Member;
 import com.codeup.novabook.domain.User;
+import com.codeup.novabook.exception.BookNotFoundException;
+import com.codeup.novabook.exception.MemberNotFoundException;
+import com.codeup.novabook.service.IConfigService;
 import com.codeup.novabook.ui.ServiceContainer;
+import com.codeup.novabook.ui.helper.CsvHelper;
 import com.codeup.novabook.ui.view.dialog.BookDialog;
 import com.codeup.novabook.ui.view.dialog.ExtendLoanDialog;
 import com.codeup.novabook.ui.view.dialog.LoanDialog;
 import com.codeup.novabook.ui.view.dialog.MemberDialog;
 import com.codeup.novabook.ui.view.dialog.ReturnLoanDialog;
 import com.codeup.novabook.ui.view.dialog.UserDialog;
-import com.codeup.novabook.ui.helper.CsvHelper;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * Main dashboard view with role-based tab control prepared for future permission-based migration.
@@ -138,30 +156,31 @@ public class DashboardView extends BaseView {
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
         
-        // Header with refresh button
-        HBox header = new HBox(10);
-        header.setAlignment(Pos.CENTER_LEFT);
-        Label titleLabel = new Label("📚 Books Management");
-        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
-        Button refreshBtn = new Button("🔄 Refresh");
-        refreshBtn.setOnAction(e -> loadBooks());
-        header.getChildren().addAll(titleLabel, refreshBtn);
-        
-        // Action buttons
+        // Action buttons (no title header)
         HBox actions = new HBox(10);
         Button btnAdd = new Button("➕ Add Book");
         btnAdd.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
         btnAdd.setOnAction(e -> handleAddBook());
         
-        Button btnImport = new Button("📥 Import CSV");
-        btnImport.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
-        btnImport.setOnAction(e -> handleImportBooks());
+        Button refreshBtn = new Button("🔄 Refresh");
+        refreshBtn.setOnAction(e -> loadBooks());
         
-        Button btnExport = new Button("📤 Export CSV");
-        btnExport.setStyle("-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold;");
-        btnExport.setOnAction(e -> handleExportBooks());
+        actions.getChildren().add(btnAdd);
         
-        actions.getChildren().addAll(btnAdd, btnImport, btnExport);
+        // Add import/export buttons only for ADMIN
+        if (canAccessAdminFeatures()) {
+            Button btnImport = new Button("📥 Import CSV");
+            btnImport.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
+            btnImport.setOnAction(e -> handleImportBooks());
+            
+            Button btnExport = new Button("📤 Export CSV");
+            btnExport.setStyle("-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold;");
+            btnExport.setOnAction(e -> handleExportBooks());
+            
+            actions.getChildren().addAll(btnImport, btnExport);
+        }
+        
+        actions.getChildren().add(refreshBtn);
         
         // Search filter (simplified inline)
         HBox filters = new HBox(10);
@@ -181,7 +200,7 @@ public class DashboardView extends BaseView {
         TableView<Book> table = createBooksTable();
         VBox.setVgrow(table, Priority.ALWAYS);
         
-        content.getChildren().addAll(header, actions, filters, table);
+        content.getChildren().addAll(actions, filters, table);
         tab.setContent(content);
         
         // Store reference for data loading
@@ -213,7 +232,19 @@ public class DashboardView extends BaseView {
         Button refreshBtn = new Button("🔄 Refresh");
         refreshBtn.setOnAction(e -> loadMembers());
         
-        controls.getChildren().addAll(searchMemberField, addMemberBtn, refreshBtn);
+        if (canAccessAdminFeatures()) {
+            Button importMembersBtn = new Button("📥 Import CSV");
+            importMembersBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
+            importMembersBtn.setOnAction(e -> handleImportMembers());
+            
+            Button exportMembersBtn = new Button("📤 Export CSV");
+            exportMembersBtn.setStyle("-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold;");
+            exportMembersBtn.setOnAction(e -> handleExportMembers());
+            
+            controls.getChildren().addAll(searchMemberField, addMemberBtn, importMembersBtn, exportMembersBtn, refreshBtn);
+        } else {
+            controls.getChildren().addAll(searchMemberField, addMemberBtn, refreshBtn);
+        }
         
         membersTable = createMembersTable();
         VBox.setVgrow(membersTable, Priority.ALWAYS);
@@ -246,10 +277,19 @@ public class DashboardView extends BaseView {
         refreshBtn.setOnAction(e -> loadLoans());
         
         if (canAccessAdminFeatures()) {
+            Button importLoansBtn = new Button("📥 Import Loans");
+            importLoansBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
+            importLoansBtn.setOnAction(e -> handleImportLoans());
+            
+            Button exportLoansBtn = new Button("📤 Export All");
+            exportLoansBtn.setStyle("-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold;");
+            exportLoansBtn.setOnAction(e -> handleExportLoans());
+            
             Button exportOverdueBtn = new Button("📤 Export Overdue");
             exportOverdueBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;");
             exportOverdueBtn.setOnAction(e -> handleExportOverdue());
-            controls.getChildren().addAll(loanFilterCombo, newLoanBtn, exportOverdueBtn, refreshBtn);
+            
+            controls.getChildren().addAll(loanFilterCombo, newLoanBtn, importLoansBtn, exportLoansBtn, exportOverdueBtn, refreshBtn);
         } else {
             controls.getChildren().addAll(loanFilterCombo, newLoanBtn, refreshBtn);
         }
@@ -335,11 +375,14 @@ public class DashboardView extends BaseView {
         VBox configOptions = new VBox(15);
         configOptions.setPrefWidth(500);
         
+        // Load current configuration from database
+        IConfigService configService = services.getConfigService();
+        
         HBox loanDurationBox = new HBox(10);
         loanDurationBox.setAlignment(Pos.CENTER_LEFT);
         Label loanDurationLabel = new Label("Default Loan Duration (days):");
         loanDurationLabel.setPrefWidth(250);
-        TextField loanDurationField = new TextField("14");
+        TextField loanDurationField = new TextField(String.valueOf(configService.getDefaultLoanDays()));
         loanDurationField.setPrefWidth(100);
         loanDurationBox.getChildren().addAll(loanDurationLabel, loanDurationField);
         
@@ -347,7 +390,7 @@ public class DashboardView extends BaseView {
         dailyFineBox.setAlignment(Pos.CENTER_LEFT);
         Label dailyFineLabel = new Label("Daily Fine Amount:");
         dailyFineLabel.setPrefWidth(250);
-        TextField dailyFineField = new TextField("1000.0");
+        TextField dailyFineField = new TextField(configService.getDailyFineAmount().toString());
         dailyFineField.setPrefWidth(100);
         dailyFineBox.getChildren().addAll(dailyFineLabel, dailyFineField);
         
@@ -355,7 +398,7 @@ public class DashboardView extends BaseView {
         maxLoansBox.setAlignment(Pos.CENTER_LEFT);
         Label maxLoansLabel = new Label("Max Active Loans per Member:");
         maxLoansLabel.setPrefWidth(250);
-        TextField maxLoansField = new TextField("3");
+        TextField maxLoansField = new TextField(String.valueOf(configService.getMaxActiveLoans()));
         maxLoansField.setPrefWidth(100);
         maxLoansBox.getChildren().addAll(maxLoansLabel, maxLoansField);
         
@@ -393,6 +436,13 @@ public class DashboardView extends BaseView {
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
         categoryCol.setPrefWidth(150);
         
+        TableColumn<Book, String> activeCol = new TableColumn<>("Active");
+        activeCol.setCellValueFactory(data -> {
+            Book book = data.getValue();
+            return new javafx.beans.property.SimpleStringProperty(book.isActive() ? "Yes" : "No");
+        });
+        activeCol.setPrefWidth(70);
+        
         TableColumn<Book, Integer> availableCol = new TableColumn<>("Available");
         availableCol.setCellValueFactory(new PropertyValueFactory<>("availableCopies"));
         availableCol.setPrefWidth(80);
@@ -422,7 +472,7 @@ public class DashboardView extends BaseView {
             }
         });
         
-        table.getColumns().addAll(isbnCol, titleCol, authorCol, categoryCol, availableCol, totalCol, actionsCol);
+        table.getColumns().addAll(isbnCol, titleCol, authorCol, categoryCol, activeCol, availableCol, totalCol, actionsCol);
         return table;
     }
     
@@ -488,7 +538,7 @@ public class DashboardView extends BaseView {
             try {
                 Member member = services.getMemberService().getMemberById(data.getValue().getMemberId());
                 return new SimpleStringProperty(member.getFirstName() + " " + member.getLastName());
-            } catch (Exception e) {
+            } catch (MemberNotFoundException e) {
                 return new SimpleStringProperty("Unknown");
             }
         });
@@ -499,7 +549,7 @@ public class DashboardView extends BaseView {
             try {
                 Book book = services.getBookService().getBookById(data.getValue().getBookId());
                 return new SimpleStringProperty(book.getTitle());
-            } catch (Exception e) {
+            } catch (BookNotFoundException e) {
                 return new SimpleStringProperty("Unknown");
             }
         });
@@ -538,10 +588,15 @@ public class DashboardView extends BaseView {
                     setGraphic(null);
                 } else {
                     Loan loan = getTableView().getItems().get(getIndex());
-                    if (loan.getStatus().name().equals("ACTIVE")) {
-                        setGraphic(new HBox(5, returnBtn, extendBtn));
-                    } else {
-                        setGraphic(null);
+                    String status = loan.getStatus().name();
+                    
+                    switch (status) {
+                        case "RETURNED" -> // No buttons for returned loans
+                            setGraphic(null);
+                        case "ACTIVE" -> // Both buttons for active loans
+                            setGraphic(new HBox(5, returnBtn, extendBtn));
+                        default -> // Only return button for overdue loans
+                            setGraphic(new HBox(5, returnBtn));
                     }
                 }
             }
@@ -580,7 +635,7 @@ public class DashboardView extends BaseView {
         statusCol.setPrefWidth(100);
         
         TableColumn<User, Void> actionsCol = new TableColumn<>("Actions");
-        actionsCol.setPrefWidth(130);
+        actionsCol.setPrefWidth(180);
         actionsCol.setCellFactory(param -> new TableCell<>() {
             private final Button editBtn = new Button("✏️ Edit");
             private final Button toggleBtn = new Button("🔄 Toggle");
@@ -729,7 +784,7 @@ public class DashboardView extends BaseView {
                 services.getBookService().deactivateBook(book.getId());
                 showSuccess("Book deactivated successfully");
                 loadBooks();
-            } catch (Exception e) {
+            } catch (BookNotFoundException e) {
                 showError("Error deactivating book: " + e.getMessage());
             }
         }
@@ -773,7 +828,7 @@ public class DashboardView extends BaseView {
             if (file != null) {
                 showSuccess("Books exported successfully to:\n" + file.getAbsolutePath());
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             showError("Export failed: " + e.getMessage());
         }
     }
@@ -795,14 +850,18 @@ public class DashboardView extends BaseView {
     }
     
     private void handleToggleMemberStatus(Member member) {
-        if (showConfirmation("Toggle Status", "Toggle status for member '" + member.getFirstName() + " " + member.getLastName() + "'?")) {
+        String action = member.isActive() ? "deactivate" : "activate";
+        if (showConfirmation("Toggle Status", "Do you want to " + action + " member '" + member.getFirstName() + " " + member.getLastName() + "'?")) {
             try {
-                // Note: toggleStatus method doesn't exist in IMemberService interface
-                // This is a placeholder - implement actual status toggle logic when needed
-                showWarning("Toggle status functionality not yet implemented in service layer");
-                // services.getMemberService().updateMemberStatus(member.getId(), newStatus);
-                // loadMembers();
-            } catch (Exception e) {
+                if (member.isActive()) {
+                    services.getMemberService().deactivateMember(member.getId());
+                    showSuccess("Member deactivated successfully");
+                } else {
+                    services.getMemberService().activateMember(member.getId());
+                    showSuccess("Member activated successfully");
+                }
+                loadMembers();
+            } catch (MemberNotFoundException e) {
                 showError("Error updating status: " + e.getMessage());
             }
         }
@@ -811,7 +870,8 @@ public class DashboardView extends BaseView {
     private void handleNewLoan() {
         LoanDialog dialog = new LoanDialog(services.getLoanService(), 
                                            services.getMemberService(), 
-                                           services.getBookService());
+                                           services.getBookService(),
+                                           services.getConfigService());
         dialog.showAndWaitResult().ifPresent(loan -> {
             showSuccess("Loan created successfully (ID: " + loan.getId() + ")");
             loadLoans();
@@ -819,7 +879,8 @@ public class DashboardView extends BaseView {
     }
     
     private void handleReturnLoan(Loan loan) {
-        ReturnLoanDialog dialog = new ReturnLoanDialog(services.getLoanService(), loan);
+        ReturnLoanDialog dialog = new ReturnLoanDialog(services.getLoanService(), 
+                                                        services.getConfigService(), loan);
         dialog.showAndWaitResult().ifPresent(returnedLoan -> {
             showSuccess("Loan returned successfully");
             loadLoans();
@@ -849,8 +910,70 @@ public class DashboardView extends BaseView {
                 showSuccess("Overdue loans exported successfully:\n" + file.getAbsolutePath() + 
                           "\n\nTotal: " + overdueLoans.size() + " overdue loans");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             showError("Export failed: " + e.getMessage());
+        }
+    }
+    
+    private void handleExportLoans() {
+        try {
+            List<Loan> allLoans = services.getLoanService().getAllLoans();
+            if (allLoans.isEmpty()) {
+                showInfo("Export Loans", "No loans found to export");
+                return;
+            }
+            
+            java.io.File file = CsvHelper.exportLoans(allLoans, 
+                    services.getMemberService(), services.getBookService(), getStage());
+            if (file != null) {
+                showSuccess("All loans exported successfully:\n" + file.getAbsolutePath() + 
+                          "\n\nTotal: " + allLoans.size() + " loans");
+            }
+        } catch (IOException e) {
+            showError("Export failed: " + e.getMessage());
+        }
+    }
+    
+    private void handleImportLoans() {
+        try {
+            int imported = CsvHelper.importLoans(services.getLoanService(), 
+                    services.getMemberService(), services.getBookService(), getStage());
+            if (imported > 0) {
+                showSuccess("Loans imported successfully!\nTotal imported: " + imported);
+                loadLoans();
+            }
+        } catch (Exception e) {
+            showError("Import failed: " + e.getMessage());
+        }
+    }
+    
+    private void handleExportMembers() {
+        try {
+            List<Member> allMembers = services.getMemberService().getAllMembers();
+            if (allMembers.isEmpty()) {
+                showInfo("Export Members", "No members found to export");
+                return;
+            }
+            
+            java.io.File file = CsvHelper.exportMembers(allMembers, getStage());
+            if (file != null) {
+                showSuccess("Members exported successfully:\n" + file.getAbsolutePath() + 
+                          "\n\nTotal: " + allMembers.size() + " members");
+            }
+        } catch (IOException e) {
+            showError("Export failed: " + e.getMessage());
+        }
+    }
+    
+    private void handleImportMembers() {
+        try {
+            int imported = CsvHelper.importMembers(services.getMemberService(), getStage());
+            if (imported > 0) {
+                showSuccess("Members imported successfully!\nTotal imported: " + imported);
+                loadMembers();
+            }
+        } catch (Exception e) {
+            showError("Import failed: " + e.getMessage());
         }
     }
     
@@ -863,17 +986,85 @@ public class DashboardView extends BaseView {
     }
     
     private void handleEditUser(User user) {
-        showInfo("Coming Soon", "Edit user: " + user.getName());
+        // Create custom dialog
+        javafx.scene.control.Dialog<User> dialog = new javafx.scene.control.Dialog<>();
+        dialog.setTitle("Edit User");
+        dialog.setHeaderText("Edit user: " + user.getEmail());
+        
+        // Create form
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+        
+        TextField nameField = new TextField(user.getName());
+        TextField emailField = new TextField(user.getEmail());
+        TextField phoneField = new TextField(user.getPhone());
+        ComboBox<com.codeup.novabook.domain.UserRole> roleCombo = new ComboBox<>();
+        roleCombo.getItems().addAll(com.codeup.novabook.domain.UserRole.values());
+        roleCombo.setValue(user.getRole());
+        
+        ComboBox<com.codeup.novabook.domain.UserStatus> statusCombo = new ComboBox<>();
+        statusCombo.getItems().addAll(com.codeup.novabook.domain.UserStatus.values());
+        statusCombo.setValue(user.getStatus());
+        
+        grid.add(new Label("Name:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("Email:"), 0, 1);
+        grid.add(emailField, 1, 1);
+        grid.add(new Label("Phone:"), 0, 2);
+        grid.add(phoneField, 1, 2);
+        grid.add(new Label("Role:"), 0, 3);
+        grid.add(roleCombo, 1, 3);
+        grid.add(new Label("Status:"), 0, 4);
+        grid.add(statusCombo, 1, 4);
+        
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(
+            javafx.scene.control.ButtonType.OK, 
+            javafx.scene.control.ButtonType.CANCEL
+        );
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == javafx.scene.control.ButtonType.OK) {
+                User updatedUser = new User();
+                updatedUser.setName(nameField.getText());
+                updatedUser.setEmail(emailField.getText());
+                updatedUser.setPhone(phoneField.getText());
+                updatedUser.setRole(roleCombo.getValue());
+                updatedUser.setStatus(statusCombo.getValue());
+                return updatedUser;
+            }
+            return null;
+        });
+        
+        dialog.showAndWait().ifPresent(updatedUser -> {
+            try {
+                // Update using the old email to find the user
+                services.getUserService().updateUserByEmail(updatedUser, user.getEmail());
+                showSuccess("User updated successfully");
+                loadUsers();
+            } catch (Exception e) {
+                showError("Error updating user: " + e.getMessage());
+            }
+        });
     }
     
     private void handleToggleUserStatus(User user) {
-        if (showConfirmation("Toggle Status", "Toggle status for user '" + user.getName() + "'?")) {
+        String action = user.isActive() ? "deactivate" : "activate";
+        if (showConfirmation("Toggle Status", "Do you want to " + action + " user '" + user.getName() + "'?")) {
             try {
-                // Note: toggleStatus method doesn't exist in IUserService interface
-                // This is a placeholder - implement actual status toggle logic when needed
-                showWarning("Toggle status functionality not yet implemented in service layer");
-                // services.getUserService().updateUserStatus(user.getId(), newStatus);
-                // loadUsers();
+                User updatedUser = new User();
+                updatedUser.setName(user.getName());
+                updatedUser.setPhone(user.getPhone());
+                updatedUser.setRole(user.getRole());
+                updatedUser.setStatus(user.isActive() ? 
+                    com.codeup.novabook.domain.UserStatus.INACTIVE : 
+                    com.codeup.novabook.domain.UserStatus.ACTIVE);
+                
+                services.getUserService().updateUserByEmail(updatedUser, user.getEmail());
+                showSuccess("User status updated successfully");
+                loadUsers();
             } catch (Exception e) {
                 showError("Error updating status: " + e.getMessage());
             }
@@ -900,15 +1091,93 @@ public class DashboardView extends BaseView {
     
     private void generateOverdueReport() {
         List<Loan> overdueLoans = services.getLoanService().getOverdueLoans();
-        showInfo("Overdue Report", "Found " + overdueLoans.size() + " overdue loans.\nFull report generation coming soon.");
+        
+        if (overdueLoans.isEmpty()) {
+            showInfo("Overdue Report", "No overdue loans found!");
+            return;
+        }
+        
+        try {
+            CsvHelper.exportLoans(overdueLoans, services.getMemberService(), 
+                services.getBookService(), stage.getScene().getWindow());
+            showSuccess("""
+                        Overdue loans report exported successfully!
+                        Found """ + overdueLoans.size() + " overdue loans.");
+        } catch (IOException e) {
+            showError("Error exporting report: " + e.getMessage());
+        }
     }
     
     private void generatePopularBooksReport() {
-        showInfo("Popular Books Report", "Report generation coming soon");
+        try {
+            List<Loan> allLoans = services.getLoanService().getAllLoans();
+            
+            // Count loans per book
+            java.util.Map<Integer, Long> loanCountsByBook = allLoans.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    Loan::getBookId, 
+                    java.util.stream.Collectors.counting()
+                ));
+            
+            // Get books sorted by loan count
+            List<Book> popularBooks = services.getBookService().getAllBooks().stream()
+                .sorted((b1, b2) -> {
+                    long count1 = loanCountsByBook.getOrDefault(b1.getId(), 0L);
+                    long count2 = loanCountsByBook.getOrDefault(b2.getId(), 0L);
+                    return Long.compare(count2, count1); // Descending order
+                })
+                .limit(50) // Top 50 most popular
+                .collect(java.util.stream.Collectors.toList());
+            
+            if (popularBooks.isEmpty()) {
+                showInfo("Popular Books Report", "No books found in the system!");
+                return;
+            }
+            
+            // Export the popular books
+            CsvHelper.exportBooksCatalog(popularBooks, stage.getScene().getWindow());
+            showSuccess("""
+                        Popular books report exported successfully!
+                        Exported top """ + popularBooks.size() + " most loaned books.");
+        } catch (IOException e) {
+            showError("Error generating report: " + e.getMessage());
+        }
     }
     
     private void generateMemberActivityReport() {
-        showInfo("Member Activity Report", "Report generation coming soon");
+        try {
+            List<Member> members = services.getMemberService().getAllMembers();
+            List<Loan> allLoans = services.getLoanService().getAllLoans();
+            
+            // Count loans per member
+            java.util.Map<Integer, Long> loanCountsByMember = allLoans.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    Loan::getMemberId, 
+                    java.util.stream.Collectors.counting()
+                ));
+            
+            // Sort members by activity (loan count)
+            List<Member> activeMembers = members.stream()
+                .sorted((m1, m2) -> {
+                    long count1 = loanCountsByMember.getOrDefault(m1.getId(), 0L);
+                    long count2 = loanCountsByMember.getOrDefault(m2.getId(), 0L);
+                    return Long.compare(count2, count1); // Descending order
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            if (activeMembers.isEmpty()) {
+                showInfo("Member Activity Report", "No members found in the system!");
+                return;
+            }
+            
+            // Export members
+            CsvHelper.exportMembers(activeMembers, stage.getScene().getWindow());
+            showSuccess("""
+                        Member activity report exported successfully!
+                        Exported """ + activeMembers.size() + " members sorted by activity.");
+        } catch (IOException e) {
+            showError("Error generating report: " + e.getMessage());
+        }
     }
     
     private void generateInventoryReport() {
@@ -922,8 +1191,44 @@ public class DashboardView extends BaseView {
     }
     
     private void saveConfiguration(String loanDuration, String dailyFine, String maxLoans) {
-        showInfo("Configuration", "Configuration saved!\nLoan Duration: " + loanDuration + " days\n" +
-                "Daily Fine: $" + dailyFine + "\nMax Loans: " + maxLoans);
+        try {
+            IConfigService configService = services.getConfigService();
+            
+            // Validate and save each configuration
+            if (!configService.validateConfigValue("DEFAULT_LOAN_DAYS", loanDuration)) {
+                showError("Invalid loan duration. Must be a positive integer.");
+                return;
+            }
+            
+            if (!configService.validateConfigValue("DAILY_FINE_AMOUNT", dailyFine)) {
+                showError("Invalid daily fine amount. Must be a positive number.");
+                return;
+            }
+            
+            if (!configService.validateConfigValue("MAX_ACTIVE_LOANS", maxLoans)) {
+                showError("Invalid max loans. Must be a positive integer.");
+                return;
+            }
+            
+            // Save all configurations
+            configService.updateConfiguration("DEFAULT_LOAN_DAYS", loanDuration);
+            configService.updateConfiguration("DAILY_FINE_AMOUNT", dailyFine);
+            configService.updateConfiguration("MAX_ACTIVE_LOANS", maxLoans);
+            
+            // Reload cache to ensure fresh data
+            configService.reloadCache();
+            
+            showInfo("Configuration Saved", 
+                """
+                Configuration updated successfully!
+                
+                Loan Duration: """ + loanDuration + " days\n" +
+                "Daily Fine: $" + dailyFine + "\n" +
+                "Max Loans: " + maxLoans);
+                
+        } catch (Exception e) {
+            showError("Failed to save configuration: " + e.getMessage());
+        }
     }
     
     private void navigateToLogin() {
@@ -941,11 +1246,11 @@ public class DashboardView extends BaseView {
                 loginView.show(loginStage);
             } else {
                 // Fallback: try to get stage from scene
-                Stage stage = (Stage) getRoot().getScene().getWindow();
-                if (stage != null) {
-                    stage.close();
-                    Stage loginStage = new Stage();
-                    loginView.show(loginStage);
+                Stage loginStage = (Stage) getRoot().getScene().getWindow();
+                if (loginStage != null) {
+                    loginStage.close();
+                    Stage newLoginStage = new Stage();
+                    loginView.show(newLoginStage);
                 }
             }
         } catch (Exception e) {

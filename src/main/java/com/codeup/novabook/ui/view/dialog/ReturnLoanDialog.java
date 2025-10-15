@@ -1,20 +1,29 @@
 package com.codeup.novabook.ui.view.dialog;
 
-import com.codeup.novabook.domain.Loan;
-import com.codeup.novabook.service.ILoanService;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+
+import com.codeup.novabook.domain.Loan;
+import com.codeup.novabook.exception.LoanAlreadyClosedException;
+import com.codeup.novabook.exception.LoanNotFoundException;
+import com.codeup.novabook.service.IConfigService;
+import com.codeup.novabook.service.ILoanService;
+
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 /**
  * Dialog for returning loans with automatic fine calculation.
@@ -23,8 +32,8 @@ import java.util.Optional;
 public class ReturnLoanDialog extends Stage {
     
     private final ILoanService loanService;
+    private final IConfigService configService;
     private final Loan loan;
-    private static final BigDecimal DEFAULT_FINE_RATE = new BigDecimal("1.00"); // $1 per day
     
     private TextField fineRateField;
     private Label daysOverdueLabel;
@@ -33,8 +42,9 @@ public class ReturnLoanDialog extends Stage {
     private boolean confirmed = false;
     private Loan resultLoan;
     
-    public ReturnLoanDialog(ILoanService loanService, Loan loan) {
+    public ReturnLoanDialog(ILoanService loanService, IConfigService configService, Loan loan) {
         this.loanService = loanService;
+        this.configService = configService;
         this.loan = loan;
         
         initModality(Modality.APPLICATION_MODAL);
@@ -75,9 +85,10 @@ public class ReturnLoanDialog extends Stage {
         grid.add(overdueLabel, 0, 3);
         grid.add(daysOverdueLabel, 1, 3);
         
-        // Fine rate field
+        // Fine rate field - get from config
         Label fineRateLabel = new Label("Fine Rate (per day):");
-        fineRateField = new TextField(DEFAULT_FINE_RATE.toString());
+        BigDecimal dailyFine = configService.getDailyFineAmount();
+        fineRateField = new TextField(dailyFine.toString());
         fineRateField.setPrefWidth(100);
         fineRateField.textProperty().addListener((obs, old, val) -> calculateFine());
         grid.add(fineRateLabel, 0, 4);
@@ -199,7 +210,7 @@ public class ReturnLoanDialog extends Stage {
             confirmed = true;
             close();
             
-        } catch (Exception e) {
+        } catch (LoanAlreadyClosedException | LoanNotFoundException e) {
             showError("Error returning loan: " + e.getMessage());
         }
     }

@@ -1,19 +1,24 @@
 package com.codeup.novabook.service.impl;
 
-import com.codeup.novabook.domain.User;
-import com.codeup.novabook.domain.UserRole;
-import com.codeup.novabook.domain.UserStatus;
-import com.codeup.novabook.exception.*;
-import com.codeup.novabook.repo.IUserRepository;
-import com.codeup.novabook.service.IUserService;
-import com.codeup.novabook.util.PasswordUtils;
-import com.codeup.novabook.util.ValidationUtils;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.codeup.novabook.domain.User;
+import com.codeup.novabook.domain.UserRole;
+import com.codeup.novabook.domain.UserStatus;
+import com.codeup.novabook.exception.AuthenticationException;
+import com.codeup.novabook.exception.DatabaseException;
+import com.codeup.novabook.exception.ErrorCode;
+import com.codeup.novabook.exception.UserAlreadyExistsException;
+import com.codeup.novabook.exception.UserNotFoundException;
+import com.codeup.novabook.exception.ValidationException;
+import com.codeup.novabook.repo.IUserRepository;
+import com.codeup.novabook.service.IUserService;
+import com.codeup.novabook.util.PasswordUtils;
+import com.codeup.novabook.util.ValidationUtils;
 
 /**
  * Service implementation for User management with authentication and business logic.
@@ -66,6 +71,7 @@ public class UserServiceImpl implements IUserService {
     }
     
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     public void register(String name, String email, String password, String phone) 
             throws ValidationException, UserAlreadyExistsException {
         LOGGER.log(Level.INFO, "[POST /api/users/register] Registering new user: {0}", email);
@@ -101,8 +107,9 @@ public class UserServiceImpl implements IUserService {
     }
     
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     public void adminRegister(String name, String email, String password, String phone, String role, String accessLevel) 
-            throws ValidationException, UserAlreadyExistsException, UserNotFoundException {
+            throws ValidationException, UserAlreadyExistsException {
         LOGGER.log(Level.INFO, "[POST /api/users/admin-register] Admin registering user with role: {0}", role);
         
         try {
@@ -140,6 +147,7 @@ public class UserServiceImpl implements IUserService {
     }
     
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     public void rename(User user, String newName) {
         LOGGER.log(Level.INFO, "[PATCH /api/users/{0}/name] Renaming user", user.getId());
         
@@ -156,6 +164,7 @@ public class UserServiceImpl implements IUserService {
     }
     
     @Override
+    @SuppressWarnings("UseSpecificCatch")
     public void changePassword(User user, String newPassword) {
         LOGGER.log(Level.INFO, "[PATCH /api/users/{0}/password] Changing password", user.getId());
         
@@ -180,6 +189,7 @@ public class UserServiceImpl implements IUserService {
             if (existingUser.isPresent()) {
                 User userToUpdate = existingUser.get();
                 userToUpdate.setName(user.getName());
+                userToUpdate.setEmail(user.getEmail()); // Update email if changed
                 userToUpdate.setPhone(user.getPhone());
                 userToUpdate.setRole(user.getRole());
                 userToUpdate.setStatus(user.getStatus());

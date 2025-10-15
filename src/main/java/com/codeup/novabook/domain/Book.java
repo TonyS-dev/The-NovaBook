@@ -44,7 +44,7 @@ public class Book {
     private String isbn; // Unique identifier (e.g., "978-3-16-148410-0")
     private String title;
     private String author;
-    private String category; // e.g., "Literature", "Science Fiction", "History"
+    private BookCategory category; // Book category from enum
     private Integer totalCopies; // Total number of book copies
     private Integer availableCopies; // Copies currently available for loan
     private BigDecimal referencePrice; // Reference price in local currency
@@ -70,7 +70,7 @@ public class Book {
      * @param author the book author
      * @param category the book category
      */
-    public Book(String isbn, String title, String author, String category) {
+    public Book(String isbn, String title, String author, BookCategory category) {
         this();
         this.isbn = isbn;
         this.title = title;
@@ -173,12 +173,21 @@ public class Book {
         this.author = author;
     }
 
-    public String getCategory() {
+    public BookCategory getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(BookCategory category) {
         this.category = category;
+    }
+
+    /**
+     * Gets the category display name for UI presentation.
+     * 
+     * @return the human-readable category name, or empty string if null
+     */
+    public String getCategoryDisplayName() {
+        return category != null ? category.getDisplayName() : "";
     }
 
     public Integer getTotalCopies() {

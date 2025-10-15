@@ -1,17 +1,26 @@
 package com.codeup.novabook.ui.view.dialog;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 import com.codeup.novabook.domain.Loan;
+import com.codeup.novabook.exception.LoanAlreadyClosedException;
+import com.codeup.novabook.exception.LoanNotFoundException;
+import com.codeup.novabook.exception.ValidationException;
 import com.codeup.novabook.service.ILoanService;
+
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import java.time.LocalDate;
-import java.util.Optional;
 
 /**
  * Dialog for extending loan due dates.
@@ -147,7 +156,7 @@ public class ExtendLoanDialog extends Stage {
             confirmed = true;
             close();
             
-        } catch (Exception e) {
+        } catch (LoanAlreadyClosedException | LoanNotFoundException | ValidationException e) {
             showError("Error extending loan: " + e.getMessage());
         }
     }
